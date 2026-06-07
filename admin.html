@@ -3,65 +3,205 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Panel - Manifest PRO</title>
-  <link rel="stylesheet" href="style.css">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <title>Developer Panel - Manifest PRO</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
-    .admin-container {
-      max-width: 900px;
-      margin: 40px auto;
-      padding: 0 20px;
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0f1e;
+      --bg-card: #0f172a;
+      --bg-card2: #1e293b;
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      --border: rgba(255,255,255,0.08);
+      --green: #10b981;
+      --red: #ef4444;
+      --yellow: #f59e0b;
+      --blue: #3b82f6;
     }
-    .admin-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 30px;
-      padding-bottom: 20px;
-      border-bottom: 1px solid var(--border-color);
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
     }
-    .admin-title {
-      font-size: 24px;
-      font-weight: 700;
-      color: var(--text-main);
-    }
-    .admin-table-card {
+
+    /* Topbar */
+    .topbar {
       background: var(--bg-card);
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius-lg);
-      padding: 20px;
+      border-bottom: 1px solid var(--border);
+      padding: 0 32px;
+      height: 64px;
+      display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 100;
+      backdrop-filter: blur(12px);
     }
-    .btn-approve {
-      background: var(--accent-green);
-      color: white;
-      border: none;
-      padding: 6px 12px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 13px;
-      margin-right: 5px;
+    .topbar-left { display: flex; align-items: center; gap: 14px; }
+    .topbar-logo {
+      width: 40px; height: 40px; border-radius: 10px;
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px;
     }
-    .btn-reject {
-      background: var(--accent-red);
-      color: white;
-      border: none;
-      padding: 6px 12px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 13px;
+    .topbar-title { font-size: 18px; font-weight: 700; color: var(--text); }
+    .topbar-badge {
+      background: rgba(245,158,11,0.15);
+      color: #f59e0b;
+      border: 1px solid rgba(245,158,11,0.3);
+      padding: 3px 10px; border-radius: 20px;
+      font-size: 12px; font-weight: 600;
     }
+    .topbar-right { display: flex; align-items: center; gap: 12px; }
     .btn-back {
-      background: var(--bg-card-hover);
-      color: var(--text-main);
-      border: 1px solid var(--border-color);
-      padding: 8px 16px;
-      border-radius: var(--radius-md);
-      cursor: pointer;
-      text-decoration: none;
-      font-weight: 500;
+      display: flex; align-items: center; gap: 8px;
+      padding: 9px 18px; border-radius: 10px;
+      background: var(--bg-card2); border: 1px solid var(--border);
+      color: var(--text); font-size: 14px; font-weight: 500;
+      text-decoration: none; cursor: pointer;
+      transition: all 0.2s;
     }
-    .btn-back:hover {
-      background: var(--border-color);
+    .btn-back:hover { background: rgba(255,255,255,0.08); }
+    .btn-logout {
+      display: flex; align-items: center; gap: 8px;
+      padding: 9px 18px; border-radius: 10px;
+      background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.3);
+      color: #ef4444; font-size: 14px; font-weight: 500;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .btn-logout:hover { background: rgba(239,68,68,0.25); }
+
+    /* Main */
+    .main { max-width: 1100px; margin: 0 auto; padding: 36px 24px; }
+
+    /* Stats */
+    .stats-row {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
+      margin-bottom: 28px;
+    }
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px; padding: 22px 24px;
+      display: flex; align-items: center; gap: 16px;
+    }
+    .stat-icon { font-size: 32px; }
+    .stat-val { font-size: 28px; font-weight: 800; }
+    .stat-label { font-size: 13px; color: var(--muted); margin-top: 2px; }
+
+    /* Table Card */
+    .table-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px; overflow: hidden;
+    }
+    .table-card-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .table-card-title {
+      font-size: 16px; font-weight: 700; color: var(--text);
+      display: flex; align-items: center; gap: 10px;
+    }
+    .badge-count {
+      background: rgba(59,130,246,0.15);
+      color: #60a5fa; border: 1px solid rgba(59,130,246,0.3);
+      padding: 2px 10px; border-radius: 20px; font-size: 12px;
+    }
+    .btn-refresh {
+      display: flex; align-items: center; gap: 6px;
+      padding: 8px 16px; border-radius: 9px;
+      background: var(--bg-card2); border: 1px solid var(--border);
+      color: var(--text); font-size: 13px; font-weight: 500;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .btn-refresh:hover { background: rgba(255,255,255,0.08); }
+
+    table { width: 100%; border-collapse: collapse; }
+    thead th {
+      text-align: left; padding: 13px 20px;
+      font-size: 12px; font-weight: 600; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.5px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(0,0,0,0.2);
+    }
+    tbody tr { transition: background 0.15s; }
+    tbody tr:hover { background: rgba(255,255,255,0.02); }
+    tbody td {
+      padding: 15px 20px; font-size: 14px;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      vertical-align: middle;
+    }
+
+    .avatar {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: linear-gradient(135deg, #3b82f6, #7c3aed);
+      display: inline-flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 14px; color: white;
+      margin-right: 10px; vertical-align: middle;
+    }
+    .name-wrap { display: inline-flex; align-items: center; }
+
+    .pill {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 4px 12px; border-radius: 20px;
+      font-size: 12px; font-weight: 600;
+    }
+    .pill-pending { background: rgba(245,158,11,0.15); color: #f59e0b; border: 1px solid rgba(245,158,11,0.3); }
+    .pill-approved { background: rgba(16,185,129,0.15); color: #10b981; border: 1px solid rgba(16,185,129,0.3); }
+
+    .action-row { display: flex; gap: 8px; }
+    .btn-approve {
+      padding: 6px 14px; border-radius: 8px;
+      background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.3);
+      color: #10b981; font-size: 13px; font-weight: 600;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .btn-approve:hover { background: rgba(16,185,129,0.3); }
+    .btn-reject {
+      padding: 6px 14px; border-radius: 8px;
+      background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.3);
+      color: #ef4444; font-size: 13px; font-weight: 600;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .btn-reject:hover { background: rgba(239,68,68,0.25); }
+
+    .empty-state {
+      padding: 60px 20px; text-align: center; color: var(--muted);
+    }
+    .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+    .empty-state p { font-size: 15px; }
+
+    /* Toast */
+    .toast-container {
+      position: fixed; top: 80px; right: 20px; z-index: 9999;
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .toast {
+      display: flex; align-items: flex-start; gap: 12px;
+      padding: 14px 18px; border-radius: 12px; min-width: 280px;
+      background: rgba(15,23,42,0.98); backdrop-filter: blur(20px);
+      border: 1px solid var(--border);
+      animation: slideIn 0.3s ease;
+      color: var(--text); font-size: 14px;
+    }
+    @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+    .spinner {
+      display: inline-block; width: 18px; height: 18px;
+      border: 2px solid rgba(255,255,255,0.2);
+      border-top-color: #3b82f6;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 640px) {
+      .stats-row { grid-template-columns: 1fr; }
+      .topbar { padding: 0 16px; }
+      .main { padding: 20px 12px; }
     }
   </style>
 </head>
@@ -69,38 +209,207 @@
 
   <div class="toast-container" id="toastContainer"></div>
 
-  <div class="admin-container">
-    <div class="admin-header">
-      <div class="admin-title">👨‍💻 Developer Panel - User Approval</div>
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-logo">👨‍💻</div>
       <div>
-        <a href="index.html" class="btn-back">⬅ Kembali ke Dashboard</a>
+        <div class="topbar-title">Developer Panel</div>
       </div>
+      <div class="topbar-badge">ADMIN</div>
     </div>
-
-    <div class="admin-table-card">
-      <table style="width: 100%;">
-        <thead>
-          <tr>
-            <th style="text-align: left; padding: 12px; border-bottom: 1px solid var(--border-color);">Nama</th>
-            <th style="text-align: left; padding: 12px; border-bottom: 1px solid var(--border-color);">Username</th>
-            <th style="text-align: left; padding: 12px; border-bottom: 1px solid var(--border-color);">Status</th>
-            <th style="text-align: left; padding: 12px; border-bottom: 1px solid var(--border-color);">Aksi</th>
-          </tr>
-        </thead>
-        <tbody id="adminTableBody">
-          <!-- Populated by JS -->
-        </tbody>
-      </table>
+    <div class="topbar-right">
+      <div id="adminInfo" style="font-size:14px; color:var(--muted);"></div>
+      <a href="index.html" class="btn-back">⬅ Dashboard</a>
+      <button class="btn-logout" onclick="doLogout()">🚪 Logout</button>
     </div>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- Stats Row -->
+    <div class="stats-row" id="statsRow">
+      <div class="stat-card">
+        <div class="stat-icon">👥</div>
+        <div>
+          <div class="stat-val" id="statTotal">-</div>
+          <div class="stat-label">Total User Terdaftar</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">⏳</div>
+        <div>
+          <div class="stat-val" id="statPending" style="color:#f59e0b">-</div>
+          <div class="stat-label">Menunggu Persetujuan</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">✅</div>
+        <div>
+          <div class="stat-val" id="statApproved" style="color:#10b981">-</div>
+          <div class="stat-label">User Aktif</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="table-card">
+      <div class="table-card-header">
+        <div class="table-card-title">
+          📋 Daftar Semua User
+          <span class="badge-count" id="badgeCount">0 user</span>
+        </div>
+        <button class="btn-refresh" onclick="loadUsers()">🔄 Refresh</button>
+      </div>
+      <div id="tableArea">
+        <div class="empty-state">
+          <div class="icon"><div class="spinner"></div></div>
+          <p>Memuat data user...</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-config.js"></script>
-  <script src="app.js"></script>
+  <script>
+    const sc = window.supabaseClient;
+
+    // ── AUTH CHECK ──
+    const me = JSON.parse(localStorage.getItem('currentUser') || 'null');
+    if (!me) { window.location.href = 'login.html'; }
+    else if ((me.role || 'operator') !== 'developer') {
+      alert('Akses Ditolak. Halaman ini hanya untuk Admin.');
+      window.location.href = 'index.html';
+    } else {
+      document.getElementById('adminInfo').textContent = 'Halo, ' + (me.name || me.username);
+    }
+
+    // ── TOAST ──
+    function showToast(type, msg) {
+      const icons = { success: '✅', error: '❌', warning: '⚠️', info: 'ℹ️' };
+      const c = document.getElementById('toastContainer');
+      const el = document.createElement('div');
+      el.className = 'toast';
+      el.innerHTML = `<span style="font-size:20px">${icons[type]||'ℹ️'}</span><span>${msg}</span>`;
+      c.appendChild(el);
+      setTimeout(() => el.remove(), 3500);
+    }
+
+    // ── LOAD USERS ──
+    async function loadUsers() {
+      const area = document.getElementById('tableArea');
+      area.innerHTML = `<div class="empty-state"><div class="icon"><div class="spinner"></div></div><p>Memuat data...</p></div>`;
+
+      const { data, error } = await sc.from('users').select('*').order('created_at', { ascending: false });
+
+      if (error) {
+        area.innerHTML = `<div class="empty-state"><div class="icon">❌</div><p>Error: ${error.message}</p></div>`;
+        return;
+      }
+
+      // Hitung stats
+      const operators = (data || []).filter(u => (u.role || 'operator') !== 'developer');
+      const pending   = operators.filter(u => (u.status || 'approved') === 'pending');
+      const approved  = operators.filter(u => (u.status || 'approved') !== 'pending');
+
+      document.getElementById('statTotal').textContent   = operators.length;
+      document.getElementById('statPending').textContent = pending.length;
+      document.getElementById('statApproved').textContent = approved.length;
+      document.getElementById('badgeCount').textContent  = operators.length + ' user';
+
+      if (operators.length === 0) {
+        area.innerHTML = `<div class="empty-state"><div class="icon">👤</div><p>Belum ada user yang mendaftar.</p></div>`;
+        return;
+      }
+
+      // Render table
+      const rows = operators.map(u => {
+        const status = u.status || 'approved';
+        const isPending = status === 'pending';
+        const initial = (u.name || u.username || '?').charAt(0).toUpperCase();
+        const actions = isPending
+          ? `<div class="action-row">
+               <button class="btn-approve" onclick="approveUser('${u.id}','${u.name||u.username}')">✅ Setujui</button>
+               <button class="btn-reject"  onclick="rejectUser('${u.id}','${u.name||u.username}')">❌ Tolak</button>
+             </div>`
+          : `<div class="action-row">
+               <button class="btn-reject" onclick="deleteUser('${u.id}','${u.name||u.username}')">🗑️ Hapus Akun</button>
+             </div>`;
+
+        return `<tr>
+          <td>
+            <div class="name-wrap">
+              <div class="avatar">${initial}</div>
+              <span style="font-weight:600">${u.name || '-'}</span>
+            </div>
+          </td>
+          <td style="color:var(--muted)">@${u.username || '-'}</td>
+          <td>
+            ${isPending
+              ? `<span class="pill pill-pending">⏳ Menunggu</span>`
+              : `<span class="pill pill-approved">✅ Aktif</span>`}
+          </td>
+          <td>${new Date(u.created_at || Date.now()).toLocaleDateString('id-ID', {day:'numeric',month:'short',year:'numeric'})}</td>
+          <td>${actions}</td>
+        </tr>`;
+      }).join('');
+
+      area.innerHTML = `
+        <div style="overflow-x:auto">
+          <table>
+            <thead>
+              <tr>
+                <th>Nama</th>
+                <th>Username</th>
+                <th>Status</th>
+                <th>Tgl Daftar</th>
+                <th>Aksi</th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>`;
+    }
+
+    // ── APPROVE ──
+    async function approveUser(id, name) {
+      if (!confirm(`Setujui akun "${name}"?`)) return;
+      const { error } = await sc.from('users').update({ status: 'approved' }).eq('id', id);
+      if (error) { showToast('error', 'Gagal: ' + error.message); return; }
+      showToast('success', `Akun "${name}" berhasil disetujui!`);
+      loadUsers();
+    }
+
+    // ── REJECT (soft – set pending again, for re-review) ──
+    async function rejectUser(id, name) {
+      if (!confirm(`Tolak & hapus akun "${name}"?`)) return;
+      const { error } = await sc.from('users').delete().eq('id', id);
+      if (error) { showToast('error', 'Gagal: ' + error.message); return; }
+      showToast('success', `Akun "${name}" berhasil ditolak & dihapus.`);
+      loadUsers();
+    }
+
+    // ── DELETE ──
+    async function deleteUser(id, name) {
+      if (!confirm(`Hapus akun "${name}" secara permanen?`)) return;
+      const { error } = await sc.from('users').delete().eq('id', id);
+      if (error) { showToast('error', 'Gagal: ' + error.message); return; }
+      showToast('success', `Akun "${name}" dihapus.`);
+      loadUsers();
+    }
+
+    // ── LOGOUT ──
+    function doLogout() {
+      if (!confirm('Keluar dari Developer Panel?')) return;
+      localStorage.removeItem('currentUser');
+      window.location.href = 'login.html';
+    }
+
+    // ── INIT ──
+    loadUsers();
+  </script>
 </body>
 </html>
