@@ -3,35 +3,30 @@
 // ============================================
 // No import needed, using window.supabaseClient from UMD
 
-let currentUser = JSON.parse(localStorage.getItem('currentUser'));
+let currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
 
 function checkAuth() {
-  const isAuthPage = window.location.pathname.includes('login.html');
-  const isAdminPage = window.location.pathname.includes('admin.html');
-  
-  if (!currentUser && !isAuthPage) {
+  const path = window.location.pathname;
+  const isAuthPage  = path.includes('login.html');
+  const isAdminPage = path.includes('admin.html');
+  const isDashboard = path.includes('index.html') || path.endsWith('/') || path.endsWith('manifest-expedisi-pro/');
+
+  // login.html & admin.html punya auth sendiri, skip
+  if (isAuthPage || isAdminPage) return;
+
+  // Di dashboard, wajib login
+  if (!currentUser && isDashboard) {
     window.location.href = 'login.html';
     return;
   }
-  
-  if (currentUser && currentUser.status === 'pending' && !isAuthPage) {
-    alert('Akun Anda masih pending, menunggu persetujuan Developer.');
+
+  if (currentUser && (currentUser.status === 'pending')) {
     localStorage.removeItem('currentUser');
     window.location.href = 'login.html';
     return;
   }
-
-  if (currentUser && isAuthPage) {
-    window.location.href = 'index.html';
-  }
-
-  if (isAdminPage && (!currentUser || currentUser.role !== 'developer')) {
-    alert('Akses Ditolak. Anda bukan Developer.');
-    window.location.href = 'index.html';
-  }
 }
 
-// Check auth immediately
 checkAuth();
 
 // ============================================
@@ -2466,29 +2461,48 @@ window.loadAdminUsers = async function() {
   if (!tbody) return;
   
   const { data, error } = await window.supabaseClient.from('users').select('*').order('created_at', { ascending: false });
-  if (error) return;
   
+  if (error) {
+    console.error('Error loading users:', error);
+    tbody.innerHTML = `<tr><td colspan="4" style="padding:20px;text-align:center;color:red;">Error: ${error.message}</td></tr>`;
+    return;
+  }
+  
+  if (!data || data.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="4" style="padding:20px;text-align:center;color:#64748b;">Belum ada user yang mendaftar.</td></tr>`;
+    return;
+  }
+
   tbody.innerHTML = '';
+  let shown = 0;
   data.forEach(user => {
-    if (user.role === 'developer') return; // Hide self
+    // Hanya sembunyikan developer/admin dari daftar
+    const role = user.role || 'operator';
+    if (role === 'developer') return;
     
+    shown++;
+    const status = user.status || 'approved';
     const tr = document.createElement('tr');
     let actionBtn = '';
-    if (user.status === 'pending') {
-      actionBtn = `<button class="btn-approve" onclick="approveUser('${user.id}')">Terima</button>
-                   <button class="btn-reject" onclick="deleteUser('${user.id}')">Tolak (Hapus)</button>`;
+    if (status === 'pending') {
+      actionBtn = `<button class="btn-approve" onclick="approveUser('${user.id}')">✅ Terima</button>
+                   <button class="btn-reject" onclick="deleteUser('${user.id}')">❌ Tolak (Hapus)</button>`;
     } else {
-      actionBtn = `<button class="btn-reject" onclick="deleteUser('${user.id}')">Hapus Akun</button>`;
+      actionBtn = `<button class="btn-reject" onclick="deleteUser('${user.id}')">🗑️ Hapus Akun</button>`;
     }
     
     tr.innerHTML = `
-      <td style="padding: 12px; border-bottom: 1px solid var(--border-color);">${user.name}</td>
-      <td style="padding: 12px; border-bottom: 1px solid var(--border-color);">${user.username}</td>
-      <td style="padding: 12px; border-bottom: 1px solid var(--border-color);">${user.status === 'pending' ? '⏳ Pending' : '✅ Approved'}</td>
+      <td style="padding: 12px; border-bottom: 1px solid var(--border-color);">${user.name || '-'}</td>
+      <td style="padding: 12px; border-bottom: 1px solid var(--border-color);">${user.username || '-'}</td>
+      <td style="padding: 12px; border-bottom: 1px solid var(--border-color);">${status === 'pending' ? '⏳ Pending' : '✅ Approved'}</td>
       <td style="padding: 12px; border-bottom: 1px solid var(--border-color);">${actionBtn}</td>
     `;
     tbody.appendChild(tr);
   });
+  
+  if (shown === 0) {
+    tbody.innerHTML = `<tr><td colspan="4" style="padding:20px;text-align:center;color:#64748b;">Tidak ada user operator yang terdaftar.</td></tr>`;
+  }
 }
 
 window.approveUser = async function(id) {
