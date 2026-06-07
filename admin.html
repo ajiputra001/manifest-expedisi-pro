@@ -5,203 +5,234 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Developer Panel - Manifest PRO</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg: #0a0f1e;
-      --bg-card: #0f172a;
-      --bg-card2: #1e293b;
-      --text: #f1f5f9;
-      --muted: #94a3b8;
-      --border: rgba(255,255,255,0.08);
-      --green: #10b981;
-      --red: #ef4444;
-      --yellow: #f59e0b;
-      --blue: #3b82f6;
+      --bg:      #070c19;
+      --bg-card: #0d1526;
+      --bg-card2:#121e34;
+      --text:    #f1f5f9;
+      --muted:   #64748b;
+      --border:  rgba(255,255,255,0.07);
+      --green:   #10b981;
+      --red:     #ef4444;
+      --yellow:  #f59e0b;
+      --blue:    #3b82f6;
+      --purple:  #8b5cf6;
+      --cyan:    #06b6d4;
     }
 
-    body {
-      font-family: 'Inter', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-    }
+    body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
 
-    /* Topbar */
+    /* ── TOPBAR ── */
     .topbar {
-      background: var(--bg-card);
+      background: rgba(13,21,38,0.95);
+      backdrop-filter: blur(16px);
       border-bottom: 1px solid var(--border);
-      padding: 0 32px;
-      height: 64px;
+      padding: 0 28px; height: 64px;
       display: flex; align-items: center; justify-content: space-between;
-      position: sticky; top: 0; z-index: 100;
-      backdrop-filter: blur(12px);
+      position: sticky; top: 0; z-index: 200;
     }
     .topbar-left { display: flex; align-items: center; gap: 14px; }
-    .topbar-logo {
-      width: 40px; height: 40px; border-radius: 10px;
+    .logo-badge {
+      width: 40px; height: 40px; border-radius: 11px;
       background: linear-gradient(135deg, #f59e0b, #d97706);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 20px;
+      display: flex; align-items: center; justify-content: center; font-size: 20px;
     }
-    .topbar-title { font-size: 18px; font-weight: 700; color: var(--text); }
-    .topbar-badge {
-      background: rgba(245,158,11,0.15);
-      color: #f59e0b;
+    .topbar-title { font-size: 17px; font-weight: 700; }
+    .role-tag {
+      background: rgba(245,158,11,0.15); color: #f59e0b;
       border: 1px solid rgba(245,158,11,0.3);
-      padding: 3px 10px; border-radius: 20px;
-      font-size: 12px; font-weight: 600;
+      padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700;
+      letter-spacing: 0.5px;
     }
-    .topbar-right { display: flex; align-items: center; gap: 12px; }
-    .btn-back {
-      display: flex; align-items: center; gap: 8px;
-      padding: 9px 18px; border-radius: 10px;
-      background: var(--bg-card2); border: 1px solid var(--border);
-      color: var(--text); font-size: 14px; font-weight: 500;
-      text-decoration: none; cursor: pointer;
-      transition: all 0.2s;
+    .topbar-right { display: flex; align-items: center; gap: 10px; }
+    .t-btn {
+      display: flex; align-items: center; gap: 6px;
+      padding: 8px 16px; border-radius: 9px; font-size: 13px; font-weight: 500;
+      cursor: pointer; transition: all 0.2s; border: 1px solid var(--border);
+      font-family: 'Inter', sans-serif;
     }
-    .btn-back:hover { background: rgba(255,255,255,0.08); }
-    .btn-logout {
-      display: flex; align-items: center; gap: 8px;
-      padding: 9px 18px; border-radius: 10px;
-      background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.3);
-      color: #ef4444; font-size: 14px; font-weight: 500;
-      cursor: pointer; transition: all 0.2s;
-    }
-    .btn-logout:hover { background: rgba(239,68,68,0.25); }
+    .t-btn-back { background: var(--bg-card2); color: var(--text); text-decoration: none; }
+    .t-btn-back:hover { background: rgba(255,255,255,0.07); }
+    .t-btn-logout { background: rgba(239,68,68,0.1); color: #ef4444; border-color: rgba(239,68,68,0.3); }
+    .t-btn-logout:hover { background: rgba(239,68,68,0.2); }
+    .t-btn-refresh { background: rgba(59,130,246,0.1); color: #60a5fa; border-color: rgba(59,130,246,0.3); }
+    .t-btn-refresh:hover { background: rgba(59,130,246,0.2); }
+    .admin-name { font-size: 13px; color: var(--muted); }
 
-    /* Main */
-    .main { max-width: 1100px; margin: 0 auto; padding: 36px 24px; }
+    /* ── TABS ── */
+    .tab-nav {
+      display: flex; gap: 0;
+      background: var(--bg-card); border-bottom: 1px solid var(--border);
+      padding: 0 28px;
+    }
+    .tab-item {
+      padding: 16px 22px; font-size: 14px; font-weight: 500;
+      color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent;
+      transition: all 0.2s; display: flex; align-items: center; gap: 7px;
+    }
+    .tab-item:hover { color: var(--text); }
+    .tab-item.active { color: var(--blue); border-bottom-color: var(--blue); }
+    .tab-badge {
+      background: rgba(239,68,68,0.2); color: #f87171;
+      border-radius: 20px; padding: 1px 7px; font-size: 11px; font-weight: 700;
+    }
 
-    /* Stats */
-    .stats-row {
-      display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
-      margin-bottom: 28px;
+    /* ── MAIN ── */
+    .main { max-width: 1200px; margin: 0 auto; padding: 28px 20px; }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ── STAT CARDS ── */
+    .stats-grid {
+      display: grid; grid-template-columns: repeat(4,1fr); gap: 16px;
+      margin-bottom: 24px;
     }
     .stat-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 16px; padding: 22px 24px;
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 16px; padding: 20px 22px;
       display: flex; align-items: center; gap: 16px;
+      transition: transform 0.2s;
     }
-    .stat-icon { font-size: 32px; }
-    .stat-val { font-size: 28px; font-weight: 800; }
-    .stat-label { font-size: 13px; color: var(--muted); margin-top: 2px; }
+    .stat-card:hover { transform: translateY(-2px); }
+    .stat-icon-wrap {
+      width: 48px; height: 48px; border-radius: 13px;
+      display: flex; align-items: center; justify-content: center; font-size: 24px;
+      flex-shrink: 0;
+    }
+    .ic-blue   { background: rgba(59,130,246,0.15); }
+    .ic-yellow { background: rgba(245,158,11,0.15); }
+    .ic-green  { background: rgba(16,185,129,0.15); }
+    .ic-purple { background: rgba(139,92,246,0.15); }
+    .stat-val  { font-size: 26px; font-weight: 800; line-height: 1; }
+    .stat-lbl  { font-size: 12px; color: var(--muted); margin-top: 4px; }
 
-    /* Table Card */
-    .table-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 16px; overflow: hidden;
+    /* ── CHART ROW ── */
+    .chart-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; }
+    .chart-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 16px; padding: 22px;
     }
-    .table-card-header {
-      padding: 20px 24px;
-      border-bottom: 1px solid var(--border);
+    .chart-card-title {
+      font-size: 14px; font-weight: 700; margin-bottom: 20px;
       display: flex; align-items: center; justify-content: space-between;
     }
-    .table-card-title {
-      font-size: 16px; font-weight: 700; color: var(--text);
-      display: flex; align-items: center; gap: 10px;
+    .chart-card-title .sub { font-size: 12px; color: var(--muted); font-weight: 400; }
+    .chart-wrap { position: relative; height: 260px; }
+
+    /* ── LEADERBOARD ── */
+    .leaderboard { margin-bottom: 24px; }
+    .lb-item {
+      display: flex; align-items: center; gap: 14px;
+      padding: 13px 0;
+      border-bottom: 1px solid var(--border);
     }
-    .badge-count {
-      background: rgba(59,130,246,0.15);
-      color: #60a5fa; border: 1px solid rgba(59,130,246,0.3);
-      padding: 2px 10px; border-radius: 20px; font-size: 12px;
+    .lb-rank {
+      width: 30px; text-align: center;
+      font-weight: 800; font-size: 15px;
     }
-    .btn-refresh {
-      display: flex; align-items: center; gap: 6px;
-      padding: 8px 16px; border-radius: 9px;
-      background: var(--bg-card2); border: 1px solid var(--border);
-      color: var(--text); font-size: 13px; font-weight: 500;
-      cursor: pointer; transition: all 0.2s;
+    .rank-1 { color: #f59e0b; }
+    .rank-2 { color: #94a3b8; }
+    .rank-3 { color: #cd7c3a; }
+    .lb-avatar {
+      width: 38px; height: 38px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 14px; color: white; flex-shrink: 0;
     }
-    .btn-refresh:hover { background: rgba(255,255,255,0.08); }
+    .lb-info { flex: 1; }
+    .lb-name { font-size: 14px; font-weight: 600; }
+    .lb-sub  { font-size: 12px; color: var(--muted); }
+    .lb-count { font-size: 20px; font-weight: 800; color: var(--blue); }
+    .lb-bar-wrap { flex: 1; height: 6px; background: rgba(255,255,255,0.06); border-radius: 3px; overflow: hidden; }
+    .lb-bar { height: 100%; border-radius: 3px; transition: width 0.8s ease; }
+
+    /* ── TABLE CARD ── */
+    .table-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 16px; overflow: hidden; margin-bottom: 24px;
+    }
+    .tc-header {
+      padding: 18px 22px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .tc-title { font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+    .count-badge {
+      background: rgba(59,130,246,0.15); color: #60a5fa;
+      border: 1px solid rgba(59,130,246,0.2);
+      padding: 2px 10px; border-radius: 20px; font-size: 12px; font-weight: 600;
+    }
+    .pending-badge {
+      background: rgba(239,68,68,0.15); color: #f87171;
+      border: 1px solid rgba(239,68,68,0.2);
+      padding: 2px 10px; border-radius: 20px; font-size: 12px; font-weight: 600;
+    }
 
     table { width: 100%; border-collapse: collapse; }
     thead th {
-      text-align: left; padding: 13px 20px;
-      font-size: 12px; font-weight: 600; color: var(--muted);
-      text-transform: uppercase; letter-spacing: 0.5px;
+      text-align: left; padding: 12px 20px;
+      font-size: 11px; font-weight: 700; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.7px;
       border-bottom: 1px solid var(--border);
       background: rgba(0,0,0,0.2);
     }
     tbody tr { transition: background 0.15s; }
-    tbody tr:hover { background: rgba(255,255,255,0.02); }
-    tbody td {
-      padding: 15px 20px; font-size: 14px;
-      border-bottom: 1px solid rgba(255,255,255,0.04);
-      vertical-align: middle;
-    }
+    tbody tr:hover { background: rgba(255,255,255,0.025); }
+    tbody td { padding: 14px 20px; font-size: 14px; border-bottom: 1px solid rgba(255,255,255,0.03); vertical-align: middle; }
 
     .avatar {
-      width: 36px; height: 36px; border-radius: 10px;
-      background: linear-gradient(135deg, #3b82f6, #7c3aed);
+      width: 34px; height: 34px; border-radius: 9px;
       display: inline-flex; align-items: center; justify-content: center;
-      font-weight: 700; font-size: 14px; color: white;
-      margin-right: 10px; vertical-align: middle;
+      font-weight: 700; font-size: 13px; color: white; margin-right: 10px;
     }
-    .name-wrap { display: inline-flex; align-items: center; }
-
-    .pill {
-      display: inline-flex; align-items: center; gap: 5px;
-      padding: 4px 12px; border-radius: 20px;
-      font-size: 12px; font-weight: 600;
-    }
-    .pill-pending { background: rgba(245,158,11,0.15); color: #f59e0b; border: 1px solid rgba(245,158,11,0.3); }
+    .pill { display: inline-flex; align-items: center; gap: 5px; padding: 4px 11px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+    .pill-pending  { background: rgba(245,158,11,0.15); color: #f59e0b; border: 1px solid rgba(245,158,11,0.3); }
     .pill-approved { background: rgba(16,185,129,0.15); color: #10b981; border: 1px solid rgba(16,185,129,0.3); }
 
-    .action-row { display: flex; gap: 8px; }
-    .btn-approve {
-      padding: 6px 14px; border-radius: 8px;
-      background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.3);
-      color: #10b981; font-size: 13px; font-weight: 600;
-      cursor: pointer; transition: all 0.2s;
+    .act-row { display: flex; gap: 7px; }
+    .btn-a {
+      padding: 6px 13px; border-radius: 7px; font-size: 12px; font-weight: 600;
+      cursor: pointer; transition: all 0.2s; border: 1px solid transparent;
+      font-family: 'Inter', sans-serif;
     }
-    .btn-approve:hover { background: rgba(16,185,129,0.3); }
-    .btn-reject {
-      padding: 6px 14px; border-radius: 8px;
-      background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.3);
-      color: #ef4444; font-size: 13px; font-weight: 600;
-      cursor: pointer; transition: all 0.2s;
-    }
-    .btn-reject:hover { background: rgba(239,68,68,0.25); }
+    .btn-ok  { background: rgba(16,185,129,0.15); border-color: rgba(16,185,129,0.3); color: #10b981; }
+    .btn-ok:hover  { background: rgba(16,185,129,0.3); }
+    .btn-del { background: rgba(239,68,68,0.12); border-color: rgba(239,68,68,0.3); color: #ef4444; }
+    .btn-del:hover { background: rgba(239,68,68,0.25); }
 
-    .empty-state {
-      padding: 60px 20px; text-align: center; color: var(--muted);
-    }
-    .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
-    .empty-state p { font-size: 15px; }
-
-    /* Toast */
-    .toast-container {
-      position: fixed; top: 80px; right: 20px; z-index: 9999;
-      display: flex; flex-direction: column; gap: 10px;
-    }
-    .toast {
-      display: flex; align-items: flex-start; gap: 12px;
-      padding: 14px 18px; border-radius: 12px; min-width: 280px;
-      background: rgba(15,23,42,0.98); backdrop-filter: blur(20px);
-      border: 1px solid var(--border);
-      animation: slideIn 0.3s ease;
-      color: var(--text); font-size: 14px;
-    }
-    @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    /* ── EMPTY / LOADING ── */
+    .empty { padding: 60px 20px; text-align: center; color: var(--muted); }
+    .empty .icon { font-size: 48px; margin-bottom: 12px; display: block; }
 
     .spinner {
-      display: inline-block; width: 18px; height: 18px;
-      border: 2px solid rgba(255,255,255,0.2);
-      border-top-color: #3b82f6;
-      border-radius: 50%;
+      display: inline-block; width: 20px; height: 20px;
+      border: 2px solid rgba(255,255,255,0.15);
+      border-top-color: var(--blue); border-radius: 50%;
       animation: spin 0.7s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    @media (max-width: 640px) {
-      .stats-row { grid-template-columns: 1fr; }
-      .topbar { padding: 0 16px; }
-      .main { padding: 20px 12px; }
+    /* ── TOAST ── */
+    .toast-container {
+      position: fixed; top: 74px; right: 18px; z-index: 9999;
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .toast {
+      display: flex; align-items: center; gap: 12px;
+      padding: 13px 18px; border-radius: 12px; min-width: 280px;
+      background: rgba(10,15,30,0.97); backdrop-filter: blur(20px);
+      border: 1px solid var(--border);
+      animation: slideIn 0.3s ease; color: var(--text); font-size: 14px;
+    }
+    @keyframes slideIn { from { transform: translateX(110%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+    @media (max-width: 768px) {
+      .stats-grid { grid-template-columns: 1fr 1fr; }
+      .chart-row  { grid-template-columns: 1fr; }
+      .topbar { padding: 0 14px; }
+      .main { padding: 16px 12px; }
     }
   </style>
 </head>
@@ -209,65 +240,142 @@
 
   <div class="toast-container" id="toastContainer"></div>
 
-  <!-- TOP BAR -->
+  <!-- TOPBAR -->
   <div class="topbar">
     <div class="topbar-left">
-      <div class="topbar-logo">👨‍💻</div>
+      <div class="logo-badge">👨‍💻</div>
       <div>
         <div class="topbar-title">Developer Panel</div>
       </div>
-      <div class="topbar-badge">ADMIN</div>
+      <span class="role-tag">SUPER ADMIN</span>
     </div>
     <div class="topbar-right">
-      <div id="adminInfo" style="font-size:14px; color:var(--muted);"></div>
-      <a href="index.html" class="btn-back">⬅ Dashboard</a>
-      <button class="btn-logout" onclick="doLogout()">🚪 Logout</button>
+      <span class="admin-name" id="adminName"></span>
+      <button class="t-btn t-btn-refresh" onclick="refreshAll()">🔄 Refresh</button>
+      <a href="index.html" class="t-btn t-btn-back">⬅ Dashboard</a>
+      <button class="t-btn t-btn-logout" onclick="doLogout()">🚪 Logout</button>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tab-nav">
+    <div class="tab-item active" id="tab-dashboard" onclick="switchTab('dashboard')">📊 Dashboard Aktivitas</div>
+    <div class="tab-item" id="tab-users" onclick="switchTab('users')">
+      👥 Kelola User
+      <span class="tab-badge" id="pendingBadge" style="display:none">0</span>
     </div>
   </div>
 
   <!-- MAIN -->
   <div class="main">
 
-    <!-- Stats Row -->
-    <div class="stats-row" id="statsRow">
-      <div class="stat-card">
-        <div class="stat-icon">👥</div>
-        <div>
-          <div class="stat-val" id="statTotal">-</div>
-          <div class="stat-label">Total User Terdaftar</div>
+    <!-- ============ TAB: DASHBOARD ============ -->
+    <div class="tab-panel active" id="panel-dashboard">
+
+      <!-- Stats -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon-wrap ic-blue">📦</div>
+          <div>
+            <div class="stat-val" id="ds-total-resi">-</div>
+            <div class="stat-lbl">Total Resi (Semua Waktu)</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon-wrap ic-yellow">⏳</div>
+          <div>
+            <div class="stat-val" id="ds-today">-</div>
+            <div class="stat-lbl">Resi Hari Ini</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon-wrap ic-green">👥</div>
+          <div>
+            <div class="stat-val" id="ds-active-users">-</div>
+            <div class="stat-lbl">User Aktif</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon-wrap ic-purple">🏆</div>
+          <div>
+            <div class="stat-val" id="ds-top-user" style="font-size:16px">-</div>
+            <div class="stat-lbl">User Paling Aktif</div>
+          </div>
         </div>
       </div>
-      <div class="stat-card">
-        <div class="stat-icon">⏳</div>
-        <div>
-          <div class="stat-val" id="statPending" style="color:#f59e0b">-</div>
-          <div class="stat-label">Menunggu Persetujuan</div>
+
+      <!-- Charts Row -->
+      <div class="chart-row">
+
+        <!-- Bar Chart: Resi per User -->
+        <div class="chart-card">
+          <div class="chart-card-title">
+            🏆 Resi per User <span class="sub">Semua waktu</span>
+          </div>
+          <div class="chart-wrap">
+            <canvas id="chartUserResi"></canvas>
+          </div>
+        </div>
+
+        <!-- Bar Chart: Resi 7 Hari Terakhir -->
+        <div class="chart-card">
+          <div class="chart-card-title">
+            📅 Tren Resi 7 Hari Terakhir <span class="sub">Per hari</span>
+          </div>
+          <div class="chart-wrap">
+            <canvas id="chartTrend"></canvas>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Leaderboard -->
+      <div class="table-card">
+        <div class="tc-header">
+          <div class="tc-title">🥇 Leaderboard User Tergiat</div>
+          <span style="font-size:13px; color:var(--muted)">Berdasarkan jumlah resi yang di-scan</span>
+        </div>
+        <div style="padding: 0 22px 22px" id="leaderboardArea">
+          <div class="empty"><span class="icon"><div class="spinner"></div></span><p>Memuat data...</p></div>
         </div>
       </div>
-      <div class="stat-card">
-        <div class="stat-icon">✅</div>
-        <div>
-          <div class="stat-val" id="statApproved" style="color:#10b981">-</div>
-          <div class="stat-label">User Aktif</div>
-        </div>
-      </div>
+
     </div>
 
-    <!-- Table -->
-    <div class="table-card">
-      <div class="table-card-header">
-        <div class="table-card-title">
-          📋 Daftar Semua User
-          <span class="badge-count" id="badgeCount">0 user</span>
+    <!-- ============ TAB: USERS ============ -->
+    <div class="tab-panel" id="panel-users">
+
+      <!-- Stats Users -->
+      <div class="stats-grid" style="grid-template-columns: repeat(3,1fr)">
+        <div class="stat-card">
+          <div class="stat-icon-wrap ic-blue">👥</div>
+          <div><div class="stat-val" id="u-total">-</div><div class="stat-lbl">Total User</div></div>
         </div>
-        <button class="btn-refresh" onclick="loadUsers()">🔄 Refresh</button>
-      </div>
-      <div id="tableArea">
-        <div class="empty-state">
-          <div class="icon"><div class="spinner"></div></div>
-          <p>Memuat data user...</p>
+        <div class="stat-card">
+          <div class="stat-icon-wrap ic-yellow">⏳</div>
+          <div><div class="stat-val" id="u-pending" style="color:#f59e0b">-</div><div class="stat-lbl">Menunggu Persetujuan</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon-wrap ic-green">✅</div>
+          <div><div class="stat-val" id="u-approved" style="color:#10b981">-</div><div class="stat-lbl">User Aktif</div></div>
         </div>
       </div>
+
+      <!-- User Table -->
+      <div class="table-card">
+        <div class="tc-header">
+          <div class="tc-title">
+            📋 Daftar User
+            <span class="count-badge" id="userCountBadge">0 user</span>
+            <span class="pending-badge" id="pendingCountBadge" style="display:none">0 pending</span>
+          </div>
+          <button class="t-btn t-btn-refresh" onclick="loadUsers()">🔄 Refresh</button>
+        </div>
+        <div id="userTableArea">
+          <div class="empty"><span class="icon"><div class="spinner"></div></span><p>Memuat data...</p></div>
+        </div>
+      </div>
+
     </div>
 
   </div>
@@ -279,17 +387,18 @@
 
     // ── AUTH CHECK ──
     const me = JSON.parse(localStorage.getItem('currentUser') || 'null');
-    if (!me) { window.location.href = 'login.html'; }
-    else if ((me.role || 'operator') !== 'developer') {
+    if (!me) {
+      window.location.href = 'login.html';
+    } else if ((me.role || 'operator') !== 'developer') {
       alert('Akses Ditolak. Halaman ini hanya untuk Admin.');
       window.location.href = 'index.html';
     } else {
-      document.getElementById('adminInfo').textContent = 'Halo, ' + (me.name || me.username);
+      document.getElementById('adminName').textContent = 'Halo, ' + (me.name || me.username);
     }
 
     // ── TOAST ──
     function showToast(type, msg) {
-      const icons = { success: '✅', error: '❌', warning: '⚠️', info: 'ℹ️' };
+      const icons = { success:'✅', error:'❌', warning:'⚠️', info:'ℹ️' };
       const c = document.getElementById('toastContainer');
       const el = document.createElement('div');
       el.className = 'toast';
@@ -298,118 +407,316 @@
       setTimeout(() => el.remove(), 3500);
     }
 
+    // ── TABS ──
+    function switchTab(name) {
+      document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      document.getElementById('tab-' + name).classList.add('active');
+      document.getElementById('panel-' + name).classList.add('active');
+      if (name === 'users') loadUsers();
+    }
+
+    // ── CHART INSTANCES ──
+    let chartUserResi = null;
+    let chartTrend = null;
+
+    // ── LOAD DASHBOARD ──
+    async function loadDashboard() {
+      // Load packages + users in parallel
+      const [pkgRes, userRes] = await Promise.all([
+        sc.from('packages').select('id, scanned_by_name, scannedAt').order('scannedAt', { ascending: false }),
+        sc.from('users').select('id, name, username, role, status')
+      ]);
+
+      const pkgs  = pkgRes.data  || [];
+      const users = userRes.data || [];
+
+      // Filter operators only
+      const operators = users.filter(u => (u.role || 'operator') !== 'developer');
+      const activeOps = operators.filter(u => (u.status || 'approved') !== 'pending');
+      const pendingOps = operators.filter(u => (u.status || 'approved') === 'pending');
+
+      // Today
+      const todayStr = new Date().toISOString().slice(0, 10);
+      const todayPkgs = pkgs.filter(p => (p.scannedAt || '').startsWith(todayStr));
+
+      // Per-user count
+      const userCount = {};
+      pkgs.forEach(p => {
+        const name = p.scanned_by_name || 'Tidak Diketahui';
+        userCount[name] = (userCount[name] || 0) + 1;
+      });
+      const sorted = Object.entries(userCount).sort((a,b) => b[1]-a[1]);
+      const topUser = sorted.length > 0 ? sorted[0][0] : '-';
+
+      // Stats
+      document.getElementById('ds-total-resi').textContent = pkgs.length;
+      document.getElementById('ds-today').textContent = todayPkgs.length;
+      document.getElementById('ds-active-users').textContent = activeOps.length;
+      document.getElementById('ds-top-user').textContent = topUser.length > 12 ? topUser.slice(0,12)+'…' : topUser;
+
+      // Pending badge on tab
+      const pb = document.getElementById('pendingBadge');
+      pb.textContent = pendingOps.length;
+      pb.style.display = pendingOps.length > 0 ? '' : 'none';
+      document.getElementById('pendingCountBadge').textContent = pendingOps.length + ' pending';
+      document.getElementById('pendingCountBadge').style.display = pendingOps.length > 0 ? '' : 'none';
+
+      // Chart 1: Resi per User
+      renderChartUserResi(sorted);
+
+      // Chart 2: Tren 7 hari
+      renderChartTrend(pkgs);
+
+      // Leaderboard
+      renderLeaderboard(sorted, operators);
+    }
+
+    // ── CHART: RESI PER USER ──
+    function renderChartUserResi(sorted) {
+      const top = sorted.slice(0, 8);
+      const labels = top.map(([name]) => name.length > 10 ? name.slice(0,10)+'…' : name);
+      const values = top.map(([,cnt]) => cnt);
+
+      const colors = [
+        '#3b82f6','#10b981','#f59e0b','#8b5cf6',
+        '#06b6d4','#ef4444','#84cc16','#f43f5e'
+      ];
+
+      const ctx = document.getElementById('chartUserResi');
+      if (chartUserResi) chartUserResi.destroy();
+      chartUserResi = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Jumlah Resi',
+            data: values,
+            backgroundColor: colors.slice(0, values.length).map(c => c + '33'),
+            borderColor: colors.slice(0, values.length),
+            borderWidth: 2,
+            borderRadius: 8,
+            borderSkipped: false,
+          }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: 'rgba(7,12,25,0.95)',
+              titleColor: '#f1f5f9', bodyColor: '#94a3b8',
+              borderColor: 'rgba(255,255,255,0.1)', borderWidth: 1,
+              callbacks: { label: ctx => ` ${ctx.raw} resi` }
+            }
+          },
+          scales: {
+            x: {
+              grid: { color: 'rgba(255,255,255,0.04)' },
+              ticks: { color: '#64748b', font: { size: 11 } }
+            },
+            y: {
+              grid: { color: 'rgba(255,255,255,0.04)' },
+              ticks: { color: '#64748b', font: { size: 11 }, stepSize: 1 },
+              beginAtZero: true
+            }
+          }
+        }
+      });
+    }
+
+    // ── CHART: TREN 7 HARI ──
+    function renderChartTrend(pkgs) {
+      const days = [];
+      const counts = [];
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        const str = d.toISOString().slice(0,10);
+        const label = d.toLocaleDateString('id-ID', { weekday:'short', day:'numeric', month:'short' });
+        days.push(label);
+        counts.push(pkgs.filter(p => (p.scannedAt||'').startsWith(str)).length);
+      }
+
+      const ctx = document.getElementById('chartTrend');
+      if (chartTrend) chartTrend.destroy();
+      chartTrend = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: days,
+          datasets: [{
+            label: 'Resi',
+            data: counts,
+            borderColor: '#3b82f6',
+            backgroundColor: 'rgba(59,130,246,0.12)',
+            fill: true, tension: 0.4, pointRadius: 5,
+            pointBackgroundColor: '#3b82f6',
+            pointBorderColor: '#fff', pointBorderWidth: 2,
+          }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: 'rgba(7,12,25,0.95)',
+              titleColor: '#f1f5f9', bodyColor: '#94a3b8',
+              borderColor: 'rgba(255,255,255,0.1)', borderWidth: 1,
+              callbacks: { label: ctx => ` ${ctx.raw} resi` }
+            }
+          },
+          scales: {
+            x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#64748b', font: { size: 11 } } },
+            y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#64748b', font: { size: 11 }, stepSize: 1 }, beginAtZero: true }
+          }
+        }
+      });
+    }
+
+    // ── LEADERBOARD ──
+    const avatarColors = ['#3b82f6','#10b981','#f59e0b','#8b5cf6','#06b6d4','#ef4444','#84cc16','#f43f5e'];
+    function renderLeaderboard(sorted, operators) {
+      const area = document.getElementById('leaderboardArea');
+      if (sorted.length === 0) {
+        area.innerHTML = '<div class="empty"><span class="icon">📭</span><p>Belum ada data scan resi</p></div>';
+        return;
+      }
+      const max = sorted[0][1];
+      const medalEmoji = ['🥇','🥈','🥉'];
+      const rankClass  = ['rank-1','rank-2','rank-3'];
+
+      const html = sorted.slice(0,10).map(([name, cnt], i) => {
+        const pct = Math.round((cnt / max) * 100);
+        const color = avatarColors[i % avatarColors.length];
+        const initial = name.charAt(0).toUpperCase();
+        // Find user for username
+        const uObj = operators.find(u => (u.name||u.username) === name);
+        const usernameLabel = uObj ? `@${uObj.username}` : '';
+        return `
+          <div class="lb-item">
+            <div class="lb-rank ${rankClass[i]||''}">${i < 3 ? medalEmoji[i] : '#'+(i+1)}</div>
+            <div class="lb-avatar" style="background:${color}">${initial}</div>
+            <div class="lb-info">
+              <div class="lb-name">${name}</div>
+              <div class="lb-sub">${usernameLabel}</div>
+            </div>
+            <div style="flex:2; padding: 0 16px">
+              <div class="lb-bar-wrap">
+                <div class="lb-bar" style="width:${pct}%; background:${color}"></div>
+              </div>
+            </div>
+            <div class="lb-count">${cnt}</div>
+          </div>`;
+      }).join('');
+      area.innerHTML = html;
+    }
+
     // ── LOAD USERS ──
     async function loadUsers() {
-      const area = document.getElementById('tableArea');
-      area.innerHTML = `<div class="empty-state"><div class="icon"><div class="spinner"></div></div><p>Memuat data...</p></div>`;
+      const area = document.getElementById('userTableArea');
+      area.innerHTML = `<div class="empty"><span class="icon"><div class="spinner"></div></span><p>Memuat data...</p></div>`;
 
       const { data, error } = await sc.from('users').select('*').order('created_at', { ascending: false });
-
       if (error) {
-        area.innerHTML = `<div class="empty-state"><div class="icon">❌</div><p>Error: ${error.message}</p></div>`;
+        area.innerHTML = `<div class="empty"><span class="icon">❌</span><p>${error.message}</p></div>`;
         return;
       }
 
-      // Hitung stats
-      const operators = (data || []).filter(u => (u.role || 'operator') !== 'developer');
-      const pending   = operators.filter(u => (u.status || 'approved') === 'pending');
-      const approved  = operators.filter(u => (u.status || 'approved') !== 'pending');
+      const operators = (data||[]).filter(u => (u.role||'operator') !== 'developer');
+      const pending   = operators.filter(u => (u.status||'approved') === 'pending');
+      const approved  = operators.filter(u => (u.status||'approved') !== 'pending');
 
-      document.getElementById('statTotal').textContent   = operators.length;
-      document.getElementById('statPending').textContent = pending.length;
-      document.getElementById('statApproved').textContent = approved.length;
-      document.getElementById('badgeCount').textContent  = operators.length + ' user';
+      document.getElementById('u-total').textContent   = operators.length;
+      document.getElementById('u-pending').textContent = pending.length;
+      document.getElementById('u-approved').textContent = approved.length;
+      document.getElementById('userCountBadge').textContent = operators.length + ' user';
+      const pcb = document.getElementById('pendingCountBadge');
+      pcb.textContent = pending.length + ' pending';
+      pcb.style.display = pending.length > 0 ? '' : 'none';
+
+      // Pending badge on tab
+      const pb = document.getElementById('pendingBadge');
+      pb.textContent = pending.length;
+      pb.style.display = pending.length > 0 ? '' : 'none';
 
       if (operators.length === 0) {
-        area.innerHTML = `<div class="empty-state"><div class="icon">👤</div><p>Belum ada user yang mendaftar.</p></div>`;
+        area.innerHTML = `<div class="empty"><span class="icon">👤</span><p>Belum ada user yang mendaftar.</p></div>`;
         return;
       }
 
-      // Render table
-      const rows = operators.map(u => {
-        const status = u.status || 'approved';
-        const isPending = status === 'pending';
-        const initial = (u.name || u.username || '?').charAt(0).toUpperCase();
+      const rows = operators.map((u, i) => {
+        const status  = u.status  || 'approved';
+        const isPending = status  === 'pending';
+        const initial = (u.name||u.username||'?').charAt(0).toUpperCase();
+        const color   = avatarColors[i % avatarColors.length];
         const actions = isPending
-          ? `<div class="action-row">
-               <button class="btn-approve" onclick="approveUser('${u.id}','${u.name||u.username}')">✅ Setujui</button>
-               <button class="btn-reject"  onclick="rejectUser('${u.id}','${u.name||u.username}')">❌ Tolak</button>
+          ? `<div class="act-row">
+               <button class="btn-a btn-ok"  onclick="approveUser('${u.id}','${(u.name||u.username).replace(/'/g,"\\'")}')">✅ Setujui</button>
+               <button class="btn-a btn-del" onclick="rejectUser('${u.id}','${(u.name||u.username).replace(/'/g,"\\'")}')">❌ Tolak</button>
              </div>`
-          : `<div class="action-row">
-               <button class="btn-reject" onclick="deleteUser('${u.id}','${u.name||u.username}')">🗑️ Hapus Akun</button>
+          : `<div class="act-row">
+               <button class="btn-a btn-del" onclick="deleteUser('${u.id}','${(u.name||u.username).replace(/'/g,"\\'")}')">🗑️ Hapus</button>
              </div>`;
-
         return `<tr>
           <td>
-            <div class="name-wrap">
-              <div class="avatar">${initial}</div>
-              <span style="font-weight:600">${u.name || '-'}</span>
-            </div>
+            <span class="avatar" style="background:${color}">${initial}</span>
+            <span style="font-weight:600">${u.name||'-'}</span>
           </td>
-          <td style="color:var(--muted)">@${u.username || '-'}</td>
-          <td>
-            ${isPending
-              ? `<span class="pill pill-pending">⏳ Menunggu</span>`
-              : `<span class="pill pill-approved">✅ Aktif</span>`}
+          <td style="color:var(--muted)">@${u.username||'-'}</td>
+          <td>${isPending
+            ? `<span class="pill pill-pending">⏳ Menunggu</span>`
+            : `<span class="pill pill-approved">✅ Aktif</span>`}</td>
+          <td style="color:var(--muted); font-size:13px">
+            ${new Date(u.created_at||Date.now()).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'})}
           </td>
-          <td>${new Date(u.created_at || Date.now()).toLocaleDateString('id-ID', {day:'numeric',month:'short',year:'numeric'})}</td>
           <td>${actions}</td>
         </tr>`;
       }).join('');
 
-      area.innerHTML = `
-        <div style="overflow-x:auto">
-          <table>
-            <thead>
-              <tr>
-                <th>Nama</th>
-                <th>Username</th>
-                <th>Status</th>
-                <th>Tgl Daftar</th>
-                <th>Aksi</th>
-              </tr>
-            </thead>
-            <tbody>${rows}</tbody>
-          </table>
-        </div>`;
+      area.innerHTML = `<div style="overflow-x:auto"><table>
+        <thead><tr>
+          <th>Nama</th><th>Username</th><th>Status</th><th>Tgl Daftar</th><th>Aksi</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table></div>`;
     }
 
-    // ── APPROVE ──
+    // ── ACTIONS ──
     async function approveUser(id, name) {
       if (!confirm(`Setujui akun "${name}"?`)) return;
       const { error } = await sc.from('users').update({ status: 'approved' }).eq('id', id);
-      if (error) { showToast('error', 'Gagal: ' + error.message); return; }
-      showToast('success', `Akun "${name}" berhasil disetujui!`);
+      if (error) return showToast('error', 'Gagal: ' + error.message);
+      showToast('success', `Akun "${name}" disetujui!`);
       loadUsers();
     }
-
-    // ── REJECT (soft – set pending again, for re-review) ──
     async function rejectUser(id, name) {
       if (!confirm(`Tolak & hapus akun "${name}"?`)) return;
       const { error } = await sc.from('users').delete().eq('id', id);
-      if (error) { showToast('error', 'Gagal: ' + error.message); return; }
-      showToast('success', `Akun "${name}" berhasil ditolak & dihapus.`);
+      if (error) return showToast('error', 'Gagal: ' + error.message);
+      showToast('success', `Akun "${name}" ditolak.`);
       loadUsers();
     }
-
-    // ── DELETE ──
     async function deleteUser(id, name) {
       if (!confirm(`Hapus akun "${name}" secara permanen?`)) return;
       const { error } = await sc.from('users').delete().eq('id', id);
-      if (error) { showToast('error', 'Gagal: ' + error.message); return; }
+      if (error) return showToast('error', 'Gagal: ' + error.message);
       showToast('success', `Akun "${name}" dihapus.`);
       loadUsers();
     }
 
-    // ── LOGOUT ──
     function doLogout() {
       if (!confirm('Keluar dari Developer Panel?')) return;
       localStorage.removeItem('currentUser');
       window.location.href = 'login.html';
     }
 
+    function refreshAll() {
+      loadDashboard();
+      showToast('info', 'Data diperbarui');
+    }
+
     // ── INIT ──
-    loadUsers();
+    loadDashboard();
   </script>
 </body>
 </html>
