@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - Manifest Ekspedisi PRO</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+      --glass-bg: rgba(255, 255, 255, 0.03);
+      --glass-border: rgba(255, 255, 255, 0.08);
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent-blue: #3b82f6;
+      --accent-glow: rgba(59, 130, 246, 0.5);
+    }
+    
+    * { box-sizing: border-box; }
+    
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: var(--bg-gradient);
+      margin: 0;
+      font-family: 'Inter', sans-serif;
+      overflow: hidden;
+      position: relative;
+    }
+    
+    /* Animated Background Orbs */
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      z-index: 0;
+      animation: float 10s infinite ease-in-out alternate;
+    }
+    .orb-1 {
+      width: 300px; height: 300px;
+      background: rgba(59, 130, 246, 0.3);
+      top: 10%; left: 15%;
+    }
+    .orb-2 {
+      width: 400px; height: 400px;
+      background: rgba(139, 92, 246, 0.2);
+      bottom: -10%; right: 10%;
+      animation-delay: -5s;
+    }
+    @keyframes float {
+      0% { transform: translateY(0) scale(1); }
+      100% { transform: translateY(-50px) scale(1.1); }
+    }
+
+    .auth-container {
+      position: relative;
+      z-index: 10;
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      padding: 50px 40px;
+      border-radius: 24px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      width: 100%;
+      max-width: 420px;
+      text-align: center;
+      border: 1px solid var(--glass-border);
+      animation: fadeUp 0.8s ease-out;
+    }
+    
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .auth-logo {
+      font-size: 54px;
+      margin-bottom: 15px;
+      text-shadow: 0 0 20px rgba(255,255,255,0.2);
+    }
+    .auth-title {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 8px;
+      letter-spacing: -0.5px;
+    }
+    .auth-subtitle {
+      font-size: 15px;
+      color: var(--text-muted);
+      margin-bottom: 35px;
+    }
+    .auth-input-group {
+      text-align: left;
+      margin-bottom: 20px;
+    }
+    .auth-input-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-muted);
+    }
+    .auth-input-group input {
+      width: 100%;
+      padding: 14px 16px;
+      border-radius: 12px;
+      border: 1px solid var(--glass-border);
+      background: rgba(0, 0, 0, 0.2);
+      color: var(--text-main);
+      font-size: 15px;
+      transition: all 0.3s ease;
+    }
+    .auth-input-group input::placeholder {
+      color: rgba(255,255,255,0.2);
+    }
+    .auth-input-group input:focus {
+      outline: none;
+      border-color: var(--accent-blue);
+      background: rgba(0, 0, 0, 0.4);
+      box-shadow: 0 0 15px var(--accent-glow);
+    }
+    .btn-auth {
+      width: 100%;
+      padding: 16px;
+      background: var(--accent-blue);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-top: 15px;
+      box-shadow: 0 10px 20px -10px var(--accent-blue);
+    }
+    .btn-auth:hover {
+      background: #2563eb;
+      transform: translateY(-2px);
+      box-shadow: 0 15px 25px -10px var(--accent-blue);
+    }
+    .btn-auth:active {
+      transform: translateY(0);
+    }
+    .auth-switch {
+      margin-top: 25px;
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+    .auth-switch a {
+      color: #60a5fa;
+      text-decoration: none;
+      font-weight: 600;
+      transition: color 0.2s;
+    }
+    .auth-switch a:hover {
+      color: #93c5fd;
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Background Orbs -->
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+
+  <!-- TOAST CONTAINER -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <div class="auth-container">
+    <div class="auth-logo">📦</div>
+    <div class="auth-title">Manifest PRO</div>
+    <div class="auth-subtitle">Login untuk mengakses dashboard</div>
+
+    <div id="loginView">
+      <div class="auth-input-group">
+        <label>Username</label>
+        <input type="text" id="loginUsername" placeholder="Masukkan username" onkeydown="if(event.key==='Enter') document.getElementById('loginPassword').focus()">
+      </div>
+      <div class="auth-input-group">
+        <label>Password</label>
+        <input type="password" id="loginPassword" placeholder="Masukkan password" onkeydown="if(event.key==='Enter') handleLogin()">
+      </div>
+      <button class="btn-auth" onclick="handleLogin()">Login</button>
+      <div class="auth-switch">
+        Belum punya akun? <a href="#" onclick="toggleAuthView('register')">Daftar sekarang</a>
+      </div>
+    </div>
+
+    <div id="registerView" style="display: none;">
+      <div class="auth-input-group">
+        <label>Nama Lengkap</label>
+        <input type="text" id="regName" placeholder="Contoh: Budi Santoso">
+      </div>
+      <div class="auth-input-group">
+        <label>Username</label>
+        <input type="text" id="regUsername" placeholder="Pilih username">
+      </div>
+      <div class="auth-input-group">
+        <label>Password</label>
+        <input type="password" id="regPassword" placeholder="Buat password" onkeydown="if(event.key==='Enter') handleRegister()">
+      </div>
+      <button class="btn-auth" onclick="handleRegister()">Daftar</button>
+      <div class="auth-switch">
+        Sudah punya akun? <a href="#" onclick="toggleAuthView('login')">Login di sini</a>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
