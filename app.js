@@ -499,8 +499,10 @@ function addResi(resi, feedbackId) {
     expeditionName: expedition.name,
     scannedAt: new Date().toISOString(),
     printed: false,
-    pickupStatus: 'ready', // ready, picked, pending
-    selected: false
+    pickupStatus: 'ready',
+    selected: false,
+    scanned_by: currentUser ? currentUser.id : null,
+    scanned_by_name: currentUser ? (currentUser.name || currentUser.username) : 'Unknown'
   };
 
   packages.unshift(pkg);
