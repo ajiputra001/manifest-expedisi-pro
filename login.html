@@ -4,220 +4,337 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Login - Manifest Ekspedisi PRO</title>
-  <link rel="stylesheet" href="style.css">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
     :root {
-      --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
-      --glass-bg: rgba(255, 255, 255, 0.03);
-      --glass-border: rgba(255, 255, 255, 0.08);
-      --text-main: #f8fafc;
-      --text-muted: #94a3b8;
-      --accent-blue: #3b82f6;
-      --accent-glow: rgba(59, 130, 246, 0.5);
+      --accent: #3b82f6;
+      --accent-glow: rgba(59,130,246,0.4);
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      --border: rgba(255,255,255,0.08);
+      --glass: rgba(255,255,255,0.04);
     }
-    
-    * { box-sizing: border-box; }
-    
+
     body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #0a0f1e 0%, #0f172a 40%, #1a1040 100%);
+      min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
-      min-height: 100vh;
-      background: var(--bg-gradient);
-      margin: 0;
-      font-family: 'Inter', sans-serif;
       overflow: hidden;
       position: relative;
     }
-    
-    /* Animated Background Orbs */
+
+    /* Animated orbs */
     .orb {
-      position: absolute;
+      position: fixed;
       border-radius: 50%;
-      filter: blur(80px);
-      z-index: 0;
-      animation: float 10s infinite ease-in-out alternate;
+      filter: blur(100px);
+      opacity: 0.5;
+      pointer-events: none;
+      animation: floatOrb 12s ease-in-out infinite alternate;
     }
-    .orb-1 {
-      width: 300px; height: 300px;
-      background: rgba(59, 130, 246, 0.3);
-      top: 10%; left: 15%;
-    }
-    .orb-2 {
-      width: 400px; height: 400px;
-      background: rgba(139, 92, 246, 0.2);
-      bottom: -10%; right: 10%;
-      animation-delay: -5s;
-    }
-    @keyframes float {
-      0% { transform: translateY(0) scale(1); }
-      100% { transform: translateY(-50px) scale(1.1); }
+    .orb-1 { width: 350px; height: 350px; background: #3b82f6; top: -80px; left: -80px; animation-delay: 0s; }
+    .orb-2 { width: 300px; height: 300px; background: #7c3aed; bottom: -60px; right: -60px; animation-delay: -6s; }
+    .orb-3 { width: 200px; height: 200px; background: #06b6d4; top: 50%; left: 50%; transform: translate(-50%,-50%); animation-delay: -3s; }
+    @keyframes floatOrb {
+      0%   { transform: translate(0,0) scale(1); }
+      100% { transform: translate(30px, -40px) scale(1.15); }
     }
 
-    .auth-container {
-      position: relative;
-      z-index: 10;
-      background: var(--glass-bg);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      padding: 50px 40px;
+    /* Toast */
+    .toast-container {
+      position: fixed; top: 20px; right: 20px; z-index: 9999;
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .toast {
+      display: flex; align-items: flex-start; gap: 12px;
+      padding: 14px 18px; border-radius: 12px; min-width: 280px; max-width: 360px;
+      background: rgba(15,23,42,0.95); backdrop-filter: blur(20px);
+      border: 1px solid var(--border);
+      animation: slideIn 0.3s ease;
+      color: var(--text); font-size: 14px;
+    }
+    @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+    /* Card */
+    .card {
+      position: relative; z-index: 10;
+      background: var(--glass);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid var(--border);
       border-radius: 24px;
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-      width: 100%;
-      max-width: 420px;
-      text-align: center;
-      border: 1px solid var(--glass-border);
-      animation: fadeUp 0.8s ease-out;
+      padding: 50px 42px;
+      width: 100%; max-width: 430px;
+      animation: fadeUp 0.7s cubic-bezier(0.16,1,0.3,1);
+      box-shadow: 0 32px 64px -16px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.05);
     }
-    
     @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(30px); }
-      to { opacity: 1; transform: translateY(0); }
+      from { opacity: 0; transform: translateY(40px) scale(0.97); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
     }
 
-    .auth-logo {
-      font-size: 54px;
-      margin-bottom: 15px;
-      text-shadow: 0 0 20px rgba(255,255,255,0.2);
+    .logo-wrap {
+      display: flex; flex-direction: column; align-items: center;
+      margin-bottom: 36px;
     }
-    .auth-title {
-      font-size: 28px;
-      font-weight: 700;
-      color: var(--text-main);
-      margin-bottom: 8px;
+    .logo-icon {
+      width: 72px; height: 72px; border-radius: 20px;
+      background: linear-gradient(135deg, #3b82f6, #7c3aed);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 36px; margin-bottom: 16px;
+      box-shadow: 0 0 40px rgba(59,130,246,0.4);
+    }
+    .logo-title {
+      font-size: 26px; font-weight: 800; color: var(--text);
       letter-spacing: -0.5px;
     }
-    .auth-subtitle {
-      font-size: 15px;
-      color: var(--text-muted);
-      margin-bottom: 35px;
+    .logo-sub {
+      font-size: 14px; color: var(--muted); margin-top: 5px;
     }
-    .auth-input-group {
-      text-align: left;
-      margin-bottom: 20px;
+
+    /* Tabs */
+    .tab-row {
+      display: flex; gap: 0;
+      background: rgba(0,0,0,0.3);
+      border-radius: 12px; padding: 4px;
+      margin-bottom: 28px;
     }
-    .auth-input-group label {
-      display: block;
-      margin-bottom: 8px;
-      font-size: 14px;
-      font-weight: 500;
-      color: var(--text-muted);
+    .tab-btn {
+      flex: 1; padding: 10px; border: none;
+      background: transparent; color: var(--muted);
+      border-radius: 9px; font-family: 'Inter', sans-serif;
+      font-size: 14px; font-weight: 500; cursor: pointer;
+      transition: all 0.2s;
     }
-    .auth-input-group input {
-      width: 100%;
-      padding: 14px 16px;
-      border-radius: 12px;
-      border: 1px solid var(--glass-border);
-      background: rgba(0, 0, 0, 0.2);
-      color: var(--text-main);
-      font-size: 15px;
-      transition: all 0.3s ease;
+    .tab-btn.active {
+      background: rgba(59,130,246,0.2);
+      color: #60a5fa; font-weight: 600;
+      box-shadow: 0 0 20px rgba(59,130,246,0.1);
     }
-    .auth-input-group input::placeholder {
-      color: rgba(255,255,255,0.2);
+
+    /* Input */
+    .form-group { margin-bottom: 18px; }
+    .form-label {
+      display: block; font-size: 13px; font-weight: 500;
+      color: var(--muted); margin-bottom: 8px;
     }
-    .auth-input-group input:focus {
+    .form-input {
+      width: 100%; padding: 14px 16px;
+      background: rgba(0,0,0,0.25); border: 1px solid var(--border);
+      border-radius: 12px; color: var(--text);
+      font-family: 'Inter', sans-serif; font-size: 15px;
+      transition: all 0.25s;
+    }
+    .form-input::placeholder { color: rgba(255,255,255,0.2); }
+    .form-input:focus {
       outline: none;
-      border-color: var(--accent-blue);
-      background: rgba(0, 0, 0, 0.4);
-      box-shadow: 0 0 15px var(--accent-glow);
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59,130,246,0.2);
+      background: rgba(0,0,0,0.4);
     }
-    .btn-auth {
-      width: 100%;
-      padding: 16px;
-      background: var(--accent-blue);
-      color: white;
-      border: none;
-      border-radius: 12px;
-      font-size: 16px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      margin-top: 15px;
-      box-shadow: 0 10px 20px -10px var(--accent-blue);
+
+    /* Button */
+    .btn-submit {
+      width: 100%; padding: 15px;
+      background: linear-gradient(135deg, #3b82f6, #2563eb);
+      color: white; border: none; border-radius: 12px;
+      font-family: 'Inter', sans-serif;
+      font-size: 15px; font-weight: 600; cursor: pointer;
+      transition: all 0.25s;
+      margin-top: 8px;
+      box-shadow: 0 8px 24px -4px rgba(59,130,246,0.5);
     }
-    .btn-auth:hover {
-      background: #2563eb;
+    .btn-submit:hover {
       transform: translateY(-2px);
-      box-shadow: 0 15px 25px -10px var(--accent-blue);
+      box-shadow: 0 12px 32px -4px rgba(59,130,246,0.6);
     }
-    .btn-auth:active {
-      transform: translateY(0);
+    .btn-submit:active { transform: translateY(0); }
+    .btn-submit:disabled {
+      opacity: 0.6; cursor: not-allowed; transform: none;
     }
-    .auth-switch {
-      margin-top: 25px;
-      font-size: 14px;
-      color: var(--text-muted);
-    }
-    .auth-switch a {
-      color: #60a5fa;
-      text-decoration: none;
-      font-weight: 600;
-      transition: color 0.2s;
-    }
-    .auth-switch a:hover {
-      color: #93c5fd;
-      text-decoration: underline;
+
+    .view { display: none; }
+    .view.active { display: block; }
+
+    .pending-box {
+      background: rgba(234,179,8,0.1);
+      border: 1px solid rgba(234,179,8,0.3);
+      border-radius: 12px; padding: 16px;
+      color: #fbbf24; font-size: 14px; line-height: 1.6;
+      margin-top: 16px; display: none;
     }
   </style>
 </head>
 <body>
 
-  <!-- Background Orbs -->
   <div class="orb orb-1"></div>
   <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
 
-  <!-- TOAST CONTAINER -->
   <div class="toast-container" id="toastContainer"></div>
 
-  <div class="auth-container">
-    <div class="auth-logo">📦</div>
-    <div class="auth-title">Manifest PRO</div>
-    <div class="auth-subtitle">Login untuk mengakses dashboard</div>
+  <div class="card">
+    <div class="logo-wrap">
+      <div class="logo-icon">📦</div>
+      <div class="logo-title">Manifest PRO</div>
+      <div class="logo-sub">Sistem Ekspedisi Enterprise</div>
+    </div>
 
-    <div id="loginView">
-      <div class="auth-input-group">
-        <label>Username</label>
-        <input type="text" id="loginUsername" placeholder="Masukkan username" onkeydown="if(event.key==='Enter') document.getElementById('loginPassword').focus()">
+    <div class="tab-row">
+      <button class="tab-btn active" id="tabLogin" onclick="switchTab('login')">Masuk</button>
+      <button class="tab-btn" id="tabRegister" onclick="switchTab('register')">Daftar Akun</button>
+    </div>
+
+    <!-- LOGIN VIEW -->
+    <div class="view active" id="viewLogin">
+      <div class="form-group">
+        <label class="form-label">Username</label>
+        <input class="form-input" type="text" id="loginUsername" placeholder="Masukkan username Anda"
+          onkeydown="if(event.key==='Enter') document.getElementById('loginPassword').focus()">
       </div>
-      <div class="auth-input-group">
-        <label>Password</label>
-        <input type="password" id="loginPassword" placeholder="Masukkan password" onkeydown="if(event.key==='Enter') handleLogin()">
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input class="form-input" type="password" id="loginPassword" placeholder="Masukkan password Anda"
+          onkeydown="if(event.key==='Enter') doLogin()">
       </div>
-      <button class="btn-auth" onclick="handleLogin()">Login</button>
-      <div class="auth-switch">
-        Belum punya akun? <a href="#" onclick="toggleAuthView('register')">Daftar sekarang</a>
+      <button class="btn-submit" id="btnLogin" onclick="doLogin()">🚀 Masuk Sekarang</button>
+      <div class="pending-box" id="pendingBox">
+        ⏳ <strong>Akun Anda sedang menunggu persetujuan.</strong><br>
+        Hubungi Admin/Developer untuk menyetujui akun Anda.
       </div>
     </div>
 
-    <div id="registerView" style="display: none;">
-      <div class="auth-input-group">
-        <label>Nama Lengkap</label>
-        <input type="text" id="regName" placeholder="Contoh: Budi Santoso">
+    <!-- REGISTER VIEW -->
+    <div class="view" id="viewRegister">
+      <div class="form-group">
+        <label class="form-label">Nama Lengkap</label>
+        <input class="form-input" type="text" id="regName" placeholder="Contoh: Budi Santoso">
       </div>
-      <div class="auth-input-group">
-        <label>Username</label>
-        <input type="text" id="regUsername" placeholder="Pilih username">
+      <div class="form-group">
+        <label class="form-label">Username</label>
+        <input class="form-input" type="text" id="regUsername" placeholder="Pilih username unik">
       </div>
-      <div class="auth-input-group">
-        <label>Password</label>
-        <input type="password" id="regPassword" placeholder="Buat password" onkeydown="if(event.key==='Enter') handleRegister()">
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input class="form-input" type="password" id="regPassword" placeholder="Buat password"
+          onkeydown="if(event.key==='Enter') doRegister()">
       </div>
-      <button class="btn-auth" onclick="handleRegister()">Daftar</button>
-      <div class="auth-switch">
-        Sudah punya akun? <a href="#" onclick="toggleAuthView('login')">Login di sini</a>
-      </div>
+      <button class="btn-submit" id="btnRegister" onclick="doRegister()">✅ Daftar Sekarang</button>
     </div>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+  <!-- Load Supabase UMD DULU, baru config, baru app -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-config.js"></script>
-  <script src="app.js"></script>
+  <script>
+    // ============== AUTH LOGIC ==============
+    let sc = window.supabaseClient;
+
+    // Jika sudah login, redirect
+    const u = JSON.parse(localStorage.getItem('currentUser') || 'null');
+    if (u) {
+      window.location.href = u.role === 'developer' ? 'admin.html' : 'index.html';
+    }
+
+    function switchTab(tab) {
+      document.getElementById('viewLogin').classList.toggle('active', tab === 'login');
+      document.getElementById('viewRegister').classList.toggle('active', tab === 'register');
+      document.getElementById('tabLogin').classList.toggle('active', tab === 'login');
+      document.getElementById('tabRegister').classList.toggle('active', tab === 'register');
+      document.getElementById('pendingBox').style.display = 'none';
+    }
+
+    function showToast(type, msg) {
+      const icons = { success: '✅', error: '❌', warning: '⚠️', info: 'ℹ️' };
+      const c = document.getElementById('toastContainer');
+      const el = document.createElement('div');
+      el.className = 'toast';
+      el.innerHTML = `<span style="font-size:20px">${icons[type]||'ℹ️'}</span><span>${msg}</span>`;
+      c.appendChild(el);
+      setTimeout(() => el.remove(), 3500);
+    }
+
+    async function doLogin() {
+      const username = document.getElementById('loginUsername').value.trim();
+      const password = document.getElementById('loginPassword').value.trim();
+      if (!username || !password) return showToast('error', 'Isi username dan password!');
+
+      const btn = document.getElementById('btnLogin');
+      btn.disabled = true; btn.textContent = 'Memuat...';
+
+      try {
+        const { data, error } = await sc.from('users').select('*')
+          .eq('username', username)
+          .eq('password', password)
+          .single();
+
+        if (error || !data) {
+          showToast('error', 'Username atau password salah!');
+          return;
+        }
+
+        const role = data.role || 'operator';
+        const status = data.status || 'approved';
+
+        if (status === 'pending') {
+          document.getElementById('pendingBox').style.display = 'block';
+          showToast('warning', 'Akun menunggu persetujuan Admin');
+          return;
+        }
+
+        localStorage.setItem('currentUser', JSON.stringify({...data, role, status}));
+        showToast('success', 'Login berhasil! Mengalihkan...');
+        setTimeout(() => {
+          window.location.href = role === 'developer' ? 'admin.html' : 'index.html';
+        }, 1000);
+
+      } catch(e) {
+        showToast('error', 'Koneksi gagal: ' + e.message);
+      } finally {
+        btn.disabled = false; btn.textContent = '🚀 Masuk Sekarang';
+      }
+    }
+
+    async function doRegister() {
+      const name = document.getElementById('regName').value.trim();
+      const username = document.getElementById('regUsername').value.trim();
+      const password = document.getElementById('regPassword').value.trim();
+      if (!name || !username || !password) return showToast('error', 'Isi semua kolom!');
+
+      const btn = document.getElementById('btnRegister');
+      btn.disabled = true; btn.textContent = 'Mendaftar...';
+
+      try {
+        // Cek apakah username sudah ada
+        const { data: existing } = await sc.from('users').select('id').eq('username', username).maybeSingle();
+        if (existing) {
+          showToast('error', 'Username sudah digunakan, pilih yang lain');
+          return;
+        }
+
+        const { error } = await sc.from('users').insert({
+          name, username, password, role: 'operator', status: 'pending'
+        });
+
+        if (error) {
+          showToast('error', 'Gagal mendaftar: ' + error.message);
+          return;
+        }
+
+        showToast('success', 'Pendaftaran berhasil! Tunggu persetujuan Admin.');
+        setTimeout(() => switchTab('login'), 2000);
+
+      } catch(e) {
+        showToast('error', 'Koneksi gagal: ' + e.message);
+      } finally {
+        btn.disabled = false; btn.textContent = '✅ Daftar Sekarang';
+      }
+    }
+  </script>
 </body>
 </html>
