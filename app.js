@@ -303,27 +303,29 @@ let pendingConfirmAction = null;
 async function init() {
   updateClock();
   setInterval(updateClock, 1000);
-  
+
+  // Langkah 1: Load dari localStorage + render awal (instan)
   await loadFromStorage();
-  
+
   initTheme();
   populateExpeditionNav();
   populateExpeditionFilter();
   updateAllStats();
   renderChart();
   renderActivity();
+  refreshCurrentView();
 
-  // Render User Profile
+  // Render User Profile di sidebar
   if (currentUser) {
+    const name = currentUser.name || currentUser.username || 'User';
     const avatar = document.querySelector('.sidebar-footer-avatar');
     const nameEl = document.querySelector('.sidebar-footer-details strong');
     const roleEl = document.querySelector('.sidebar-footer-details span');
-    
-    if (avatar) avatar.textContent = currentUser.name.substring(0, 2).toUpperCase();
-    if (nameEl) nameEl.textContent = currentUser.name;
-    if (roleEl) roleEl.textContent = currentUser.role === 'developer' ? 'Super Admin' : 'Operator';
-    
-    // Show Developer Panel nav if developer
+
+    if (avatar) avatar.textContent = name.substring(0, 2).toUpperCase();
+    if (nameEl) nameEl.textContent = name;
+    if (roleEl) roleEl.textContent = (currentUser.role === 'developer') ? '⭐ Super Admin' : '👤 Operator';
+
     if (currentUser.role === 'developer') {
       const devNav = document.getElementById('navDeveloperPanel');
       if (devNav) devNav.style.display = 'flex';
@@ -351,10 +353,13 @@ async function init() {
 
 async function syncPackageToSupabase(action, pkg) {
   try {
-    if (action === 'insert') await window.supabaseClient.from('packages').insert(pkg);
-    if (action === 'update') await window.supabaseClient.from('packages').update(pkg).eq('id', pkg.id);
+    if (!window.supabaseClient) return;
+    // Hapus field sementara yang tidak ada di database
+    const { selected, expedisi, timestamp, ...dbPkg } = pkg;
+    if (action === 'insert') await window.supabaseClient.from('packages').insert(dbPkg);
+    if (action === 'update') await window.supabaseClient.from('packages').update(dbPkg).eq('id', pkg.id);
     if (action === 'delete') await window.supabaseClient.from('packages').delete().eq('id', pkg.id);
-  } catch (err) { console.error(err); }
+  } catch (err) { console.warn('Sync error:', err.message); }
 }
 
 async function syncActivityToSupabase(act) {
@@ -364,22 +369,55 @@ async function syncActivityToSupabase(act) {
 }
 
 function saveToStorage() {
-  // LocalStorage fallback disabled in PRO, we use realtime syncing instead.
+  // Simpan ke localStorage sebagai backup agar tidak hilang saat refresh
+  try {
+    localStorage.setItem('manifest_packages',    JSON.stringify(packages));
+    localStorage.setItem('manifest_activity',    JSON.stringify(activityLog.slice(0, 100)));
+  } catch(e) { /* storage penuh, lewati */ }
 }
 
 async function loadFromStorage() {
+  // ── Langkah 1: Muat dari localStorage dulu (instan, tidak perlu tunggu jaringan)
   try {
-    const { data: pkgs, error: errPkg } = await window.supabaseClient.from('packages').select('*').order('timestamp', { ascending: false });
-    if (!errPkg && pkgs) packages = pkgs;
-    
-    const { data: acts, error: errAct } = await window.supabaseClient.from('activities').select('*').order('timestamp', { ascending: false }).limit(100);
-    if (!errAct && acts) activityLog = acts;
-    
-    if (window.location.pathname.includes('admin.html') && window.loadAdminUsers) {
-      window.loadAdminUsers();
+    const localPkgs = JSON.parse(localStorage.getItem('manifest_packages') || '[]');
+    const localActs = JSON.parse(localStorage.getItem('manifest_activity') || '[]');
+    if (localPkgs.length > 0) { packages = localPkgs; activityLog = localActs; }
+  } catch(e) {}
+
+  // ── Langkah 2: Ambil data terbaru dari Supabase (sinkronisasi)
+  try {
+    if (!window.supabaseClient) return;
+
+    // Coba urutan berdasar scannedAt dulu, fallback ke created_at
+    let { data: pkgs, error: errPkg } = await window.supabaseClient
+      .from('packages')
+      .select('*')
+      .order('scannedAt', { ascending: false });
+
+    if (errPkg) {
+      // Kolom scannedAt belum ada, coba fallback
+      const res2 = await window.supabaseClient
+        .from('packages')
+        .select('*');
+      pkgs = res2.data;
     }
+
+    if (pkgs && pkgs.length > 0) {
+      packages = pkgs;
+      saveToStorage(); // update localStorage dari data cloud
+    }
+
+    const { data: acts } = await window.supabaseClient
+      .from('activities')
+      .select('*')
+      .order('timestamp', { ascending: false })
+      .limit(100);
+
+    if (acts && acts.length > 0) activityLog = acts;
+
   } catch (e) {
-    console.warn('Supabase load failed:', e);
+    console.warn('Supabase load failed, pakai data lokal:', e);
+    // Data dari localStorage sudah dimuat di langkah 1, aman.
   }
 }
 
