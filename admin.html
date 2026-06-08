@@ -428,6 +428,15 @@
         sc.from('users').select('id, name, username, role, status')
       ]);
 
+      if (pkgRes.error) {
+        console.error("Supabase Error (Packages):", pkgRes.error);
+        alert("⚠️ DATABASE ERROR: Gagal mengambil data resi dari Supabase.\n\nPesan: " + pkgRes.error.message + "\n\nSolusi: Pastikan Anda sudah menjalankan SQL UPDATE di Supabase Editor (menambahkan kolom scanned_by_name, dll).");
+      }
+      
+      if (userRes.error) {
+        console.error("Supabase Error (Users):", userRes.error);
+      }
+
       const pkgs  = pkgRes.data  || [];
       const users = userRes.data || [];
 
