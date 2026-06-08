@@ -468,22 +468,17 @@ function detectExpedition(resi) {
 
 function processResi() {
   const input = document.getElementById('resiInput');
-  const resi = input.value.trim();
-  if (!resi) return;
-
-  addResi(resi, 'scanFeedback');
-  input.value = '';
+  const select = document.getElementById('scanExpeditionSelect');
+  const resi = input.value;
+  const expOverride = select ? select.value : 'AUTO';
+  if (addResi(resi, 'scanFeedback', expOverride)) {
+    input.value = '';
+  }
   input.focus();
 }
 
 function processResiFocus() {
   const input = document.getElementById('resiInputFocus');
-  const resi = input.value.trim();
-  if (!resi) return;
-
-  addResi(resi, 'scanFeedbackFocus');
-  input.value = '';
-  input.focus();
   updateLastScannedList();
 }
 
@@ -499,7 +494,7 @@ function handleScanKeydown(e) {
   }
 }
 
-function addResi(resi, feedbackId) {
+function addResi(resi, feedbackId, expOverride = 'AUTO') {
   resi = resi.trim();
   if (!resi) return false;
 
@@ -527,7 +522,12 @@ function addResi(resi, feedbackId) {
     return false;
   }
 
-  const expeditionKey = detectExpedition(resi);
+  let expeditionKey;
+  if (expOverride && expOverride !== 'AUTO') {
+    expeditionKey = expOverride;
+  } else {
+    expeditionKey = detectExpedition(resi);
+  }
   const expedition = EXPEDITIONS[expeditionKey];
 
   const pkg = {
@@ -590,15 +590,19 @@ function closeDuplicateWarning() {
 
 function processBulkResi() {
   const textarea = document.getElementById('bulkInput');
-  processBulk(textarea, 'scanFeedback');
+  const select = document.getElementById('scanExpeditionSelect');
+  const expOverride = select ? select.value : 'AUTO';
+  processBulk(textarea, 'scanFeedback', expOverride);
 }
 
 function processBulkResiFocus() {
   const textarea = document.getElementById('bulkInputFocus');
-  processBulk(textarea, 'scanFeedbackFocus');
+  const select = document.getElementById('scanExpeditionSelectFocus');
+  const expOverride = select ? select.value : 'AUTO';
+  processBulk(textarea, 'scanFeedbackFocus', expOverride);
 }
 
-function processBulk(textarea, feedbackId) {
+function processBulk(textarea, feedbackId, expOverride = 'AUTO') {
   const text = textarea.value.trim();
   if (!text) return;
 
@@ -610,7 +614,12 @@ function processBulk(textarea, feedbackId) {
     if (packages.some(p => p.resi.toUpperCase() === resi.toUpperCase())) {
       duplicates++;
     } else {
-      const expeditionKey = detectExpedition(resi);
+      let expeditionKey;
+      if (expOverride && expOverride !== 'AUTO') {
+        expeditionKey = expOverride;
+      } else {
+        expeditionKey = detectExpedition(resi);
+      }
       const expedition = EXPEDITIONS[expeditionKey];
       const pkgToInsert = {
         id: generateId(),
@@ -800,22 +809,35 @@ function refreshCurrentView() {
 
 function populateExpeditionNav() {
   const container = document.getElementById('expedisiNavList');
-  container.innerHTML = '';
+  if (container) container.innerHTML = '';
+
+  const scanSelect1 = document.getElementById('scanExpeditionSelect');
+  const scanSelect2 = document.getElementById('scanExpeditionSelectFocus');
+  let optionsHtml = '<option value="AUTO">✨ Auto Detect (Otomatis)</option>';
 
   Object.entries(EXPEDITIONS).forEach(([key, exp]) => {
-    const count = packages.filter(p => p.expeditionKey === key).length;
-    const item = document.createElement('div');
-    item.className = 'nav-item';
-    item.setAttribute('data-page', 'expedition');
-    item.setAttribute('data-expedition', key);
-    item.onclick = () => navigateTo('expedition', key);
-    item.innerHTML = `
-      <span class="expedisi-dot" style="background: ${exp.color}"></span>
-      <span>${exp.shortName}</span>
-      ${count > 0 ? `<span class="nav-item-badge">${count}</span>` : ''}
-    `;
-    container.appendChild(item);
+    // Populate Navigation
+    if (container) {
+      const count = packages.filter(p => p.expeditionKey === key).length;
+      const item = document.createElement('div');
+      item.className = 'nav-item';
+      item.setAttribute('data-page', 'expedition');
+      item.setAttribute('data-expedition', key);
+      item.onclick = () => navigateTo('expedition', key);
+      item.innerHTML = `
+        <span class="expedisi-dot" style="background: ${exp.color}"></span>
+        <span>${exp.shortName}</span>
+        ${count > 0 ? `<span class="nav-item-badge">${count}</span>` : ''}
+      `;
+      container.appendChild(item);
+    }
+    
+    // Build options string for select dropdowns
+    optionsHtml += `<option value="${key}">${exp.icon} ${exp.name}</option>`;
   });
+
+  if (scanSelect1) scanSelect1.innerHTML = optionsHtml;
+  if (scanSelect2) scanSelect2.innerHTML = optionsHtml;
 }
 
 function toggleSidebar() {
