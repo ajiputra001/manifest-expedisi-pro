@@ -1936,29 +1936,56 @@ let currentDetailPackageId = null;
 function openDetailModal(id) {
   const pkg = packages.find(p => p.id === id);
   if (!pkg) return;
-  
+
   currentDetailPackageId = id;
-  const expData = EXPEDITIONS[pkg.expedisi];
+  window.__currentDetailPkgId = id; // expose globally for tracking
 
+  // Title
   document.getElementById('detailModalTitle').textContent = `Detail: ${pkg.resi}`;
-  document.getElementById('detailExpedisi').textContent = expData ? expData.name : pkg.expedisi;
-  document.getElementById('detailWaktu').textContent = formatDateTime(pkg.timestamp);
 
-  // Generate Barcode using JsBarcode if available
-  if (typeof JsBarcode !== 'undefined') {
-    JsBarcode("#barcodeSvg", pkg.resi, {
-      format: "CODE128",
-      lineColor: isLightMode ? "#0f172a" : "#ffffff",
-      background: "transparent",
-      width: 2,
-      height: 60,
-      displayValue: true,
-      fontSize: 16,
-      margin: 0
-    });
+  // Ekspedisi — support both old (expedisi) and new (expeditionKey) fields
+  const expKey = pkg.expeditionKey || pkg.expedisi || 'KURIR_LAIN';
+  const expData = EXPEDITIONS[expKey];
+  document.getElementById('detailExpedisi').textContent = expData ? expData.name : (pkg.expeditionName || expKey);
+
+  // Waktu — support both old (timestamp) and new (scannedAt) fields
+  const rawTime = pkg.scannedAt || pkg.timestamp || null;
+  document.getElementById('detailWaktu').textContent = rawTime ? formatDateTime(rawTime) : '-';
+
+  // Di-scan oleh
+  const scannedByEl = document.getElementById('detailScannedBy');
+  if (scannedByEl) scannedByEl.textContent = pkg.scanned_by_name || 'Tidak diketahui';
+
+  // Status Pickup
+  const pickupEl = document.getElementById('detailPickupStatus');
+  if (pickupEl) {
+    const statusMap = { ready: '📦 Siap Pickup', picked: '✅ Sudah Diambil', pending: '⏳ Tertunda' };
+    pickupEl.textContent = pkg.printed ? '✅ Sudah di Pickup' : (statusMap[pkg.pickupStatus] || '📦 Belum Pickup');
   }
 
-  // Handle Photo
+  // Reset tracking area
+  const trackResult = document.getElementById('trackingResult');
+  const trackBadge = document.getElementById('trackingBadge');
+  if (trackResult) {
+    trackResult.style.justifyContent = 'center';
+    trackResult.innerHTML = '<span style="color:var(--text-muted);font-size:13px">Klik "Lacak Sekarang" untuk melihat status paket terkini dari ekspedisi</span>';
+  }
+  if (trackBadge) trackBadge.style.display = 'none';
+
+  // Barcode
+  if (typeof JsBarcode !== 'undefined') {
+    try {
+      JsBarcode("#barcodeSvg", pkg.resi, {
+        format: "CODE128",
+        lineColor: isLightMode ? "#0f172a" : "#ffffff",
+        background: "transparent",
+        width: 2, height: 60,
+        displayValue: true, fontSize: 16, margin: 0
+      });
+    } catch(e) { console.warn('Barcode error:', e); }
+  }
+
+  // Photo
   const previewImg = document.getElementById('photoPreviewImage');
   const placeholder = document.getElementById('photoPlaceholder');
   const btnRemove = document.getElementById('btnRemovePhoto');
@@ -1980,6 +2007,7 @@ function openDetailModal(id) {
 
   document.getElementById('detailModal').classList.add('active');
 }
+window.openDetailModal = openDetailModal;
 
 function closeDetailModal() {
   document.getElementById('detailModal').classList.remove('active');
@@ -2454,40 +2482,13 @@ const TRACKING_STATUS_MAP = {
   'CANCELLED':    { label: 'Dibatalkan ❌', bg: 'rgba(239,68,68,0.2)', color: '#f87171', border: 'rgba(239,68,68,0.4)' },
 };
 
-// ID paket yang sedang dibuka di modal
-let currentDetailPkgId = null;
-
-// Intercept openDetailModal
-const originalOpenDetailModal = window.openDetailModal || openDetailModal;
-window.openDetailModal = function(id) {
-  currentDetailPkgId = id;
-
-  // Reset tracking area
-  const tr = document.getElementById('trackingResult');
-  const tb = document.getElementById('trackingBadge');
-  if (tr) { tr.style.justifyContent = 'center'; tr.innerHTML = '<span style="color:var(--text-muted);font-size:13px">Klik "Lacak Sekarang" untuk melihat status paket terkini</span>'; }
-  if (tb) tb.style.display = 'none';
-
-  originalOpenDetailModal(id);
-
-  const pkg = packages.find(p => p.id === id);
-  if (pkg) {
-    setTimeout(() => renderBarcode(pkg.resi), 50);
-
-    // Isi detail tambahan
-    const scannedByEl = document.getElementById('detailScannedBy');
-    const pickupEl    = document.getElementById('detailPickupStatus');
-    if (scannedByEl) scannedByEl.textContent = pkg.scanned_by_name || 'Tidak diketahui';
-    if (pickupEl) {
-      const statusMap = { ready: '📦 Siap Pickup', picked: '✅ Sudah Diambil', pending: '⏳ Tertunda' };
-      pickupEl.textContent = statusMap[pkg.pickupStatus] || '-';
-    }
-  }
-};
+// ── Tracking: gunakan currentDetailPackageId (sudah diset di openDetailModal)
 
 // Fungsi tracking utama
 window.trackCurrentResi = async function() {
-  const pkg = packages.find(p => p.id === currentDetailPkgId);
+  // Cari package berdasarkan id yang disimpan saat modal dibuka
+  const pkgId = window.__currentDetailPkgId || currentDetailPackageId;
+  const pkg = packages.find(p => p.id === pkgId);
   if (!pkg) return;
 
   const courierCode = BINDERBYTE_COURIER_MAP[pkg.expeditionKey];
@@ -2532,43 +2533,74 @@ window.trackCurrentResi = async function() {
       badgeEl.style.border = `1px solid ${statusInfo.border}`;
     }
 
-    // Auto deteksi Cancel → peringatan
+    // Auto deteksi Cancel/Return → peringatan merah mencolok
     if (statusKey === 'CANCELLED' || statusKey === 'RETURNED') {
-      showToast('warning', `⚠️ ${pkg.resi} — ${statusInfo.label}`);
+      showToast('warning', `⚠️ PERHATIAN! ${pkg.resi} — ${statusInfo.label}`);
     }
 
-    // Render timeline
-    const timelineHtml = history.slice(0, 10).map((h, i) => `
-      <div style="display:flex;gap:12px;padding:10px 0;${i < history.length-1 ? 'border-bottom:1px solid rgba(255,255,255,0.05)' : ''}">
-        <div style="display:flex;flex-direction:column;align-items:center;padding-top:3px">
-          <div style="width:10px;height:10px;border-radius:50%;background:${i===0 ? statusInfo.color : '#334155'};flex-shrink:0"></div>
-          ${i < history.length-1 ? '<div style="width:1px;flex:1;background:rgba(255,255,255,0.08);margin-top:4px"></div>' : ''}
+    // ── Render: Info Ringkas
+    const summaryHtml = `
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;padding:14px;
+                  background:rgba(0,0,0,0.25);border-radius:10px;margin-bottom:14px;">
+        <div>
+          <div style="font-size:11px;color:#64748b;margin-bottom:3px">PENGIRIM</div>
+          <div style="font-size:13px;font-weight:600">${summary.shipper || '-'}</div>
         </div>
-        <div style="flex:1">
-          <div style="font-size:13px;font-weight:${i===0?'600':'400'};color:${i===0?'var(--text-main)':'var(--text-muted)'};">${h.desc || h.description || '-'}</div>
-          <div style="font-size:11px;color:#475569;margin-top:3px">${h.date || h.time || ''} ${h.city ? '• ' + h.city : ''}</div>
+        <div>
+          <div style="font-size:11px;color:#64748b;margin-bottom:3px">PENERIMA</div>
+          <div style="font-size:13px;font-weight:600">${summary.receiver || '-'}</div>
         </div>
-      </div>
-    `).join('');
+        <div>
+          <div style="font-size:11px;color:#64748b;margin-bottom:3px">TGL KIRIM</div>
+          <div style="font-size:13px;font-weight:600">${summary.date || '-'}</div>
+        </div>
+      </div>`;
+
+    // ── Render: Timeline seperti SPX
+    const timelineHtml = history.map((h, i) => {
+      const isFirst = i === 0;
+      const dotColor = isFirst ? statusInfo.color : (i < 3 ? '#475569' : '#1e293b');
+      const dotBorder = isFirst ? statusInfo.color : '#334155';
+      const desc = h.desc || h.description || '-';
+      const dateStr = h.date || '';
+      const timeStr = h.time || '';
+      const city = h.city_name || h.city || '';
+      // Parse tanggal & waktu
+      const datePart = dateStr.split(' ')[0] || dateStr;
+      const timePart = dateStr.includes(' ') ? dateStr.split(' ')[1] : timeStr;
+
+      return `
+        <div style="display:flex;gap:0;padding:0;${i < history.length-1 ? '' : ''}">
+          <!-- Kolom Waktu (kiri) -->
+          <div style="width:90px;flex-shrink:0;text-align:right;padding-right:14px;padding-top:2px">
+            <div style="font-size:13px;font-weight:${isFirst?'700':'400'};color:${isFirst?statusInfo.color:'#64748b'}">${timePart}</div>
+            <div style="font-size:11px;color:#475569">${datePart}</div>
+          </div>
+          <!-- Garis & Dot -->
+          <div style="display:flex;flex-direction:column;align-items:center;width:20px;flex-shrink:0">
+            <div style="width:${isFirst?'12px':'9px'};height:${isFirst?'12px':'9px'};border-radius:50%;
+                        background:${isFirst?statusInfo.color:'transparent'};
+                        border:2px solid ${dotBorder};flex-shrink:0;margin-top:3px;
+                        ${isFirst?'box-shadow:0 0 8px '+statusInfo.color+'60':''}"></div>
+            ${i < history.length-1 ? '<div style="width:1px;flex:1;min-height:28px;background:rgba(255,255,255,0.06);margin:2px 0"></div>' : ''}
+          </div>
+          <!-- Konten kanan -->
+          <div style="flex:1;padding:0 0 18px 12px">
+            <div style="font-size:13px;font-weight:${isFirst?'600':'400'};
+                        color:${isFirst?'var(--text-main)':'#94a3b8'};line-height:1.4">${desc}</div>
+            ${city ? `<div style="font-size:11px;color:#475569;margin-top:2px">📍 ${city}</div>` : ''}
+          </div>
+        </div>`;
+    }).join('');
 
     resultEl.style.justifyContent = 'flex-start';
+    resultEl.style.display = 'block';
     resultEl.innerHTML = `
       <div style="width:100%">
-        <div style="display:flex;align-items:center;gap:10px;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,0.07);margin-bottom:8px">
-          <div style="flex:1">
-            <div style="font-size:12px;color:#64748b">Penerima</div>
-            <div style="font-size:14px;font-weight:600">${summary.receiver || '-'}</div>
-          </div>
-          <div style="flex:1">
-            <div style="font-size:12px;color:#64748b">Tanggal Kirim</div>
-            <div style="font-size:14px;font-weight:600">${summary.date || '-'}</div>
-          </div>
-          <div style="flex:1">
-            <div style="font-size:12px;color:#64748b">Pengirim</div>
-            <div style="font-size:14px;font-weight:600">${summary.shipper || '-'}</div>
-          </div>
+        ${summaryHtml}
+        <div style="max-height:300px;overflow-y:auto;padding-right:4px">
+          ${timelineHtml || '<div style="color:#64748b;font-size:13px;padding:8px 0">Tidak ada histori tersedia</div>'}
         </div>
-        <div style="max-height:240px;overflow-y:auto;padding-right:4px">${timelineHtml || '<div style="color:#64748b;font-size:13px;padding:8px 0">Tidak ada histori tersedia</div>'}</div>
       </div>`;
 
   } catch(e) {
