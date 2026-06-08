@@ -2018,6 +2018,13 @@ function openDetailModal(id) {
   }
 
   document.getElementById('detailModal').classList.add('active');
+
+  // Auto-track immediately when modal opens
+  if (window.trackCurrentResi) {
+    setTimeout(() => {
+      window.trackCurrentResi();
+    }, 300);
+  }
 }
 window.openDetailModal = openDetailModal;
 
