@@ -1950,7 +1950,19 @@ function openDetailModal(id) {
 
   // Waktu — support both old (timestamp) and new (scannedAt) fields
   const rawTime = pkg.scannedAt || pkg.timestamp || null;
-  document.getElementById('detailWaktu').textContent = rawTime ? formatDateTime(rawTime) : '-';
+  if (rawTime) {
+    try {
+      const d = new Date(rawTime);
+      document.getElementById('detailWaktu').textContent = d.toLocaleString('id-ID', {
+        day: 'numeric', month: 'short', year: 'numeric',
+        hour: '2-digit', minute: '2-digit', second: '2-digit'
+      });
+    } catch(e) {
+      document.getElementById('detailWaktu').textContent = rawTime;
+    }
+  } else {
+    document.getElementById('detailWaktu').textContent = '-';
+  }
 
   // Di-scan oleh
   const scannedByEl = document.getElementById('detailScannedBy');
