@@ -268,15 +268,6 @@ const EXPEDITIONS = {
     bgColor: 'rgba(139, 92, 246, 0.12)',
     borderColor: 'rgba(139, 92, 246, 0.3)',
   },
-  'KURIR_LAIN': {
-    name: 'Kurir Lainnya',
-    shortName: 'Lainnya',
-    color: '#64748b',
-    icon: '📦',
-    prefixes: [],
-    bgColor: 'rgba(100, 116, 139, 0.12)',
-    borderColor: 'rgba(100, 116, 139, 0.3)',
-  },
 };
 
 // ============================================
@@ -447,7 +438,6 @@ function detectExpedition(resi) {
 
   // Sort expeditions by prefix length (longer first for accuracy)
   const sortedExpeditions = Object.entries(EXPEDITIONS)
-    .filter(([key]) => key !== 'KURIR_LAIN')
     .flatMap(([key, exp]) => 
       exp.prefixes.map(prefix => ({ key, prefix, len: prefix.length }))
     )
@@ -459,7 +449,7 @@ function detectExpedition(resi) {
     }
   }
 
-  return 'KURIR_LAIN';
+  return null;
 }
 
 // ============================================
@@ -479,6 +469,13 @@ function processResi() {
 
 function processResiFocus() {
   const input = document.getElementById('resiInputFocus');
+  const select = document.getElementById('scanExpeditionSelectFocus');
+  const resi = input.value;
+  const expOverride = select ? select.value : 'AUTO';
+  if (addResi(resi, 'scanFeedbackFocus', expOverride)) {
+    input.value = '';
+  }
+  input.focus();
   updateLastScannedList();
 }
 
@@ -528,6 +525,18 @@ function addResi(resi, feedbackId, expOverride = 'AUTO') {
   } else {
     expeditionKey = detectExpedition(resi);
   }
+
+  if (!expeditionKey) {
+    showFeedback(feedbackId, 'error', `❌ <strong>Resi tidak dikenali!</strong><br>Pastikan nomor resi benar, atau pilih Ekspedisi secara manual dari Dropdown.`);
+    playSound('error');
+    const inputs = document.querySelectorAll('.scan-input');
+    inputs.forEach(inp => {
+      inp.classList.add('duplicate-flash');
+      setTimeout(() => inp.classList.remove('duplicate-flash'), 1500);
+    });
+    return false;
+  }
+
   const expedition = EXPEDITIONS[expeditionKey];
 
   const pkg = {
@@ -620,6 +629,12 @@ function processBulk(textarea, feedbackId, expOverride = 'AUTO') {
       } else {
         expeditionKey = detectExpedition(resi);
       }
+      
+      if (!expeditionKey) {
+        // Skip unknown resi in bulk
+        return;
+      }
+      
       const expedition = EXPEDITIONS[expeditionKey];
       const pkgToInsert = {
         id: generateId(),
@@ -1285,9 +1300,24 @@ function renderExpeditionDetail(key) {
     <div class="expedition-icon-lg" style="background: ${exp.bgColor}; color: ${exp.color}; border: 2px solid ${exp.borderColor};">
       ${exp.icon}
     </div>
-    <div class="expedition-info">
-      <h2 style="color: ${exp.color}">${exp.name}</h2>
+    <div class="expedition-info" style="flex: 1;">
+      <h2 style="color: ${exp.color}; display: flex; align-items: center; gap: 10px;">
+        ${exp.name} 
+      </h2>
       <p>${allExpPackages.length} paket terdaftar${filteredExpPackages.length !== allExpPackages.length ? ` (${filteredExpPackages.length} ditampilkan)` : ''}</p>
+    </div>
+    
+    <!-- EMBEDDED SCAN BAR -->
+    <div style="flex: 1; max-width: 400px; display: flex; align-items: center; gap: 8px;">
+      <div class="scan-input-container" style="flex: 1; margin: 0; min-height: 44px; font-size: 14px;">
+        <input type="text" class="scan-input" id="expDetailScanInput"
+               placeholder="Scan resi ${exp.shortName}..." 
+               onkeydown="if(event.key==='Enter') { event.preventDefault(); addResi(this.value, 'scanFeedback', '${key}'); this.value=''; }">
+        <span class="scan-input-icon" style="font-size: 16px;">📷</span>
+      </div>
+      <button class="scan-btn" onclick="const i = document.getElementById('expDetailScanInput'); addResi(i.value, 'scanFeedback', '${key}'); i.value='';" style="padding: 10px 16px; font-size: 14px; min-height: 44px; white-space: nowrap;">
+        ⚡ Tambah
+      </button>
     </div>
   `;
 
@@ -1298,6 +1328,12 @@ function renderExpeditionDetail(key) {
 
   document.getElementById('expName').textContent = exp.shortName;
   document.getElementById('expTableCount').textContent = `${filteredExpPackages.length} paket`;
+
+  // Focus scan input automatically when opening the tab
+  setTimeout(() => {
+    const detailScanInput = document.getElementById('expDetailScanInput');
+    if (detailScanInput) detailScanInput.focus();
+  }, 100);
 
   const tbody = document.getElementById('expTableBody');
   const empty = document.getElementById('expEmpty');
@@ -1965,8 +2001,8 @@ function openDetailModal(id) {
   // Title
   document.getElementById('detailModalTitle').textContent = `Detail: ${pkg.resi}`;
 
-  // Ekspedisi — support both old (expedisi) and new (expeditionKey) fields
-  const expKey = pkg.expeditionKey || pkg.expedisi || 'KURIR_LAIN';
+  // Ekspedisi
+  const expKey = pkg.expeditionKey || pkg.expedisi || '';
   const expData = EXPEDITIONS[expKey];
   document.getElementById('detailExpedisi').textContent = expData ? expData.name : (pkg.expeditionName || expKey);
 
@@ -2348,11 +2384,6 @@ function closeCalendar() {
 }
 
 // ============================================
-// INITIALIZATION KICKSTART
-// ============================================
-document.addEventListener('DOMContentLoaded', init);
-
-// ============================================
 // ADVANCED EXPORT & DATA SAFETY (v4.0)
 // ============================================
 
@@ -2493,6 +2524,11 @@ function renderBarcode(resi) {
 }
 
 // ============================================
+// INITIALIZATION KICKSTART
+// ============================================
+document.addEventListener('DOMContentLoaded', init);
+
+// ============================================
 // BINDERBYTE TRACKING API
 // ============================================
 const BINDERBYTE_API_KEY = '3f4878c780923585911ca5155bbe44dfe6360fa47865ca535033b5d3e04295d4';
@@ -2500,9 +2536,12 @@ const BINDERBYTE_API_KEY = '3f4878c780923585911ca5155bbe44dfe6360fa47865ca535033
 // Mapping kode ekspedisi internal → kode BinderByte
 const BINDERBYTE_COURIER_MAP = {
   'SPX':      'spx',
-  'JNE':      'jne',
-  'J&T':      'jnt',
   'SICEPAT':  'sicepat',
+  'J&T':      'jnt',
+  'JNT':      'jnt',
+  'JNE':      'jne',
+  'NINJA':    'ninja',
+  'IDEXPRESS':'ide',
   'POS':      'pos',
   'ANTERAJA': 'anteraja',
   'TIKI':     'tiki',
