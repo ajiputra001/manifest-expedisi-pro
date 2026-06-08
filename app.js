@@ -2559,19 +2559,18 @@ window.trackCurrentResi = async function() {
 
     // ── Render: Info Ringkas
     const summaryHtml = `
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;padding:14px;
-                  background:rgba(0,0,0,0.25);border-radius:10px;margin-bottom:14px;">
-        <div>
-          <div style="font-size:11px;color:#64748b;margin-bottom:3px">PENGIRIM</div>
-          <div style="font-size:13px;font-weight:600">${summary.shipper || '-'}</div>
+      <div class="tracking-summary-grid">
+        <div class="tracking-summary-item">
+          <div class="label">PENGIRIM</div>
+          <div class="value">${summary.shipper || '-'}</div>
         </div>
-        <div>
-          <div style="font-size:11px;color:#64748b;margin-bottom:3px">PENERIMA</div>
-          <div style="font-size:13px;font-weight:600">${summary.receiver || '-'}</div>
+        <div class="tracking-summary-item">
+          <div class="label">PENERIMA</div>
+          <div class="value">${summary.receiver || '-'}</div>
         </div>
-        <div>
-          <div style="font-size:11px;color:#64748b;margin-bottom:3px">TGL KIRIM</div>
-          <div style="font-size:13px;font-weight:600">${summary.date || '-'}</div>
+        <div class="tracking-summary-item">
+          <div class="label">TGL KIRIM</div>
+          <div class="value">${summary.date || '-'}</div>
         </div>
       </div>`;
 
@@ -2584,30 +2583,23 @@ window.trackCurrentResi = async function() {
       const dateStr = h.date || '';
       const timeStr = h.time || '';
       const city = h.city_name || h.city || '';
-      // Parse tanggal & waktu
+      
       const datePart = dateStr.split(' ')[0] || dateStr;
       const timePart = dateStr.includes(' ') ? dateStr.split(' ')[1] : timeStr;
 
       return `
-        <div style="display:flex;gap:0;padding:0;${i < history.length-1 ? '' : ''}">
-          <!-- Kolom Waktu (kiri) -->
-          <div style="width:90px;flex-shrink:0;text-align:right;padding-right:14px;padding-top:2px">
-            <div style="font-size:13px;font-weight:${isFirst?'700':'400'};color:${isFirst?statusInfo.color:'#64748b'}">${timePart}</div>
-            <div style="font-size:11px;color:#475569">${datePart}</div>
+        <div class="timeline-item ${isFirst ? 'is-first' : ''}">
+          <div class="timeline-time">
+            <div class="time" style="color: ${isFirst ? statusInfo.color : 'var(--text-muted)'}">${timePart}</div>
+            <div class="date">${datePart}</div>
           </div>
-          <!-- Garis & Dot -->
-          <div style="display:flex;flex-direction:column;align-items:center;width:20px;flex-shrink:0">
-            <div style="width:${isFirst?'12px':'9px'};height:${isFirst?'12px':'9px'};border-radius:50%;
-                        background:${isFirst?statusInfo.color:'transparent'};
-                        border:2px solid ${dotBorder};flex-shrink:0;margin-top:3px;
-                        ${isFirst?'box-shadow:0 0 8px '+statusInfo.color+'60':''}"></div>
-            ${i < history.length-1 ? '<div style="width:1px;flex:1;min-height:28px;background:rgba(255,255,255,0.06);margin:2px 0"></div>' : ''}
+          <div class="timeline-dot-wrapper">
+            <div class="timeline-dot" style="background: ${isFirst ? statusInfo.color : 'transparent'}; border-color: ${dotBorder}; box-shadow: ${isFirst ? '0 0 8px ' + statusInfo.color + '60' : 'none'}"></div>
+            ${i < history.length - 1 ? '<div class="timeline-line"></div>' : ''}
           </div>
-          <!-- Konten kanan -->
-          <div style="flex:1;padding:0 0 18px 12px">
-            <div style="font-size:13px;font-weight:${isFirst?'600':'400'};
-                        color:${isFirst?'var(--text-main)':'#94a3b8'};line-height:1.4">${desc}</div>
-            ${city ? `<div style="font-size:11px;color:#475569;margin-top:2px">📍 ${city}</div>` : ''}
+          <div class="timeline-content">
+            <div class="timeline-desc">${desc}</div>
+            ${city ? `<div class="timeline-city">📍 ${city}</div>` : ''}
           </div>
         </div>`;
     }).join('');
@@ -2615,10 +2607,10 @@ window.trackCurrentResi = async function() {
     resultEl.style.justifyContent = 'flex-start';
     resultEl.style.display = 'block';
     resultEl.innerHTML = `
-      <div style="width:100%">
+      <div class="tracking-container">
         ${summaryHtml}
-        <div style="max-height:300px;overflow-y:auto;padding-right:4px">
-          ${timelineHtml || '<div style="color:#64748b;font-size:13px;padding:8px 0">Tidak ada histori tersedia</div>'}
+        <div class="tracking-timeline-scroll">
+          ${timelineHtml || '<div class="empty-timeline">Tidak ada histori tersedia</div>'}
         </div>
       </div>`;
 
