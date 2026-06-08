@@ -94,8 +94,8 @@ html {
 }
 
 body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  background: var(--bg-primary);
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: radial-gradient(circle at 50% 0%, #1e293b, #020617);
   color: var(--text-primary);
   min-height: 100vh;
   overflow-x: hidden;
