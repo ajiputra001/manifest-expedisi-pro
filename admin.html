@@ -620,6 +620,27 @@
       area.innerHTML = html;
     }
 
+    // ── EVENT LISTENERS ──
+    document.addEventListener('DOMContentLoaded', () => {
+      loadDashboard();
+      
+      // Auto-refresh using Realtime Subscription!
+      if (sc) {
+        sc.channel('public:packages')
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'packages' }, payload => {
+            loadDashboard();
+          })
+          .subscribe();
+        
+        sc.channel('public:users')
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'users' }, payload => {
+            loadUsers(); // refresh users list
+            loadDashboard(); // refresh stats
+          })
+          .subscribe();
+      }
+    });
+
     // ── LOAD USERS ──
     async function loadUsers() {
       const area = document.getElementById('userTableArea');
