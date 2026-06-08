@@ -2419,15 +2419,164 @@ function renderBarcode(resi) {
   }
 }
 
-// Intercept openDetailModal to trigger barcode render
+// ============================================
+// BINDERBYTE TRACKING API
+// ============================================
+const BINDERBYTE_API_KEY = '3f4878c780923585911ca5155bbe44dfe6360fa47865ca535033b5d3e04295d4';
+
+// Mapping kode ekspedisi internal → kode BinderByte
+const BINDERBYTE_COURIER_MAP = {
+  'SPX':      'spx',
+  'JNE':      'jne',
+  'J&T':      'jnt',
+  'SICEPAT':  'sicepat',
+  'POS':      'pos',
+  'ANTERAJA': 'anteraja',
+  'TIKI':     'tiki',
+  'NINJA':    'ninja',
+  'LION':     'lion',
+  'WAHANA':   'wahana',
+  'SAP':      'sap',
+  'KURIR_LAIN': null,
+};
+
+// Status warna & label dari BinderByte
+const TRACKING_STATUS_MAP = {
+  'DELIVERED':    { label: 'Terkirim ✅',    bg: 'rgba(16,185,129,0.2)',  color: '#10b981', border: 'rgba(16,185,129,0.4)' },
+  'ON_PROCESS':   { label: 'Dalam Proses 📦', bg: 'rgba(59,130,246,0.2)', color: '#60a5fa', border: 'rgba(59,130,246,0.4)' },
+  'ON_DELIVERY':  { label: 'Dalam Pengiriman 🚚', bg: 'rgba(245,158,11,0.2)', color: '#fbbf24', border: 'rgba(245,158,11,0.4)' },
+  'NOT_FOUND':    { label: 'Tidak Ditemukan ❓', bg: 'rgba(100,116,139,0.2)', color: '#94a3b8', border: 'rgba(100,116,139,0.4)' },
+  'RETURNED':     { label: 'Retur / Dikembalikan ↩️', bg: 'rgba(239,68,68,0.2)', color: '#f87171', border: 'rgba(239,68,68,0.4)' },
+  'CANCELLED':    { label: 'Dibatalkan ❌', bg: 'rgba(239,68,68,0.2)', color: '#f87171', border: 'rgba(239,68,68,0.4)' },
+};
+
+// ID paket yang sedang dibuka di modal
+let currentDetailPkgId = null;
+
+// Intercept openDetailModal
 const originalOpenDetailModal = window.openDetailModal || openDetailModal;
 window.openDetailModal = function(id) {
+  currentDetailPkgId = id;
+
+  // Reset tracking area
+  const tr = document.getElementById('trackingResult');
+  const tb = document.getElementById('trackingBadge');
+  if (tr) { tr.style.justifyContent = 'center'; tr.innerHTML = '<span style="color:var(--text-muted);font-size:13px">Klik "Lacak Sekarang" untuk melihat status paket terkini</span>'; }
+  if (tb) tb.style.display = 'none';
+
   originalOpenDetailModal(id);
+
   const pkg = packages.find(p => p.id === id);
   if (pkg) {
     setTimeout(() => renderBarcode(pkg.resi), 50);
+
+    // Isi detail tambahan
+    const scannedByEl = document.getElementById('detailScannedBy');
+    const pickupEl    = document.getElementById('detailPickupStatus');
+    if (scannedByEl) scannedByEl.textContent = pkg.scanned_by_name || 'Tidak diketahui';
+    if (pickupEl) {
+      const statusMap = { ready: '📦 Siap Pickup', picked: '✅ Sudah Diambil', pending: '⏳ Tertunda' };
+      pickupEl.textContent = statusMap[pkg.pickupStatus] || '-';
+    }
   }
 };
+
+// Fungsi tracking utama
+window.trackCurrentResi = async function() {
+  const pkg = packages.find(p => p.id === currentDetailPkgId);
+  if (!pkg) return;
+
+  const courierCode = BINDERBYTE_COURIER_MAP[pkg.expeditionKey];
+  const btn = document.getElementById('btnTrack');
+  const resultEl = document.getElementById('trackingResult');
+  const badgeEl  = document.getElementById('trackingBadge');
+
+  if (!courierCode) {
+    resultEl.innerHTML = '<span style="color:#f59e0b">⚠️ Kurir ini belum didukung oleh API tracking.</span>';
+    return;
+  }
+
+  // Loading state
+  btn.disabled = true;
+  btn.innerHTML = '<span style="display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.7s linear infinite"></span> Melacak...';
+  resultEl.style.justifyContent = 'center';
+  resultEl.innerHTML = '<span style="color:var(--text-muted)">⏳ Menghubungi server ekspedisi...</span>';
+
+  try {
+    const url = `https://api.binderbyte.com/v1/track?api_key=${BINDERBYTE_API_KEY}&courier=${courierCode}&awb=${encodeURIComponent(pkg.resi)}`;
+    const res  = await fetch(url);
+    const json = await res.json();
+
+    if (json.status !== 200 || !json.data) {
+      resultEl.style.justifyContent = 'center';
+      resultEl.innerHTML = `<span style="color:#f59e0b">⚠️ ${json.message || 'Data resi tidak ditemukan di server ekspedisi.'}</span>`;
+      btn.disabled = false; btn.innerHTML = '🛰️ Coba Lagi';
+      return;
+    }
+
+    const summary  = json.data.summary;
+    const history  = json.data.history || [];
+    const statusKey = (summary.status || 'NOT_FOUND').toUpperCase().replace(/ /g,'_');
+    const statusInfo = TRACKING_STATUS_MAP[statusKey] || TRACKING_STATUS_MAP['NOT_FOUND'];
+
+    // Update badge
+    if (badgeEl) {
+      badgeEl.textContent = statusInfo.label;
+      badgeEl.style.display = '';
+      badgeEl.style.background = statusInfo.bg;
+      badgeEl.style.color = statusInfo.color;
+      badgeEl.style.border = `1px solid ${statusInfo.border}`;
+    }
+
+    // Auto deteksi Cancel → peringatan
+    if (statusKey === 'CANCELLED' || statusKey === 'RETURNED') {
+      showToast('warning', `⚠️ ${pkg.resi} — ${statusInfo.label}`);
+    }
+
+    // Render timeline
+    const timelineHtml = history.slice(0, 10).map((h, i) => `
+      <div style="display:flex;gap:12px;padding:10px 0;${i < history.length-1 ? 'border-bottom:1px solid rgba(255,255,255,0.05)' : ''}">
+        <div style="display:flex;flex-direction:column;align-items:center;padding-top:3px">
+          <div style="width:10px;height:10px;border-radius:50%;background:${i===0 ? statusInfo.color : '#334155'};flex-shrink:0"></div>
+          ${i < history.length-1 ? '<div style="width:1px;flex:1;background:rgba(255,255,255,0.08);margin-top:4px"></div>' : ''}
+        </div>
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:${i===0?'600':'400'};color:${i===0?'var(--text-main)':'var(--text-muted)'};">${h.desc || h.description || '-'}</div>
+          <div style="font-size:11px;color:#475569;margin-top:3px">${h.date || h.time || ''} ${h.city ? '• ' + h.city : ''}</div>
+        </div>
+      </div>
+    `).join('');
+
+    resultEl.style.justifyContent = 'flex-start';
+    resultEl.innerHTML = `
+      <div style="width:100%">
+        <div style="display:flex;align-items:center;gap:10px;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,0.07);margin-bottom:8px">
+          <div style="flex:1">
+            <div style="font-size:12px;color:#64748b">Penerima</div>
+            <div style="font-size:14px;font-weight:600">${summary.receiver || '-'}</div>
+          </div>
+          <div style="flex:1">
+            <div style="font-size:12px;color:#64748b">Tanggal Kirim</div>
+            <div style="font-size:14px;font-weight:600">${summary.date || '-'}</div>
+          </div>
+          <div style="flex:1">
+            <div style="font-size:12px;color:#64748b">Pengirim</div>
+            <div style="font-size:14px;font-weight:600">${summary.shipper || '-'}</div>
+          </div>
+        </div>
+        <div style="max-height:240px;overflow-y:auto;padding-right:4px">${timelineHtml || '<div style="color:#64748b;font-size:13px;padding:8px 0">Tidak ada histori tersedia</div>'}</div>
+      </div>`;
+
+  } catch(e) {
+    resultEl.style.justifyContent = 'center';
+    resultEl.innerHTML = `<span style="color:#ef4444">❌ Gagal terhubung: ${e.message}</span>`;
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '🛰️ Lacak Sekarang';
+  }
+};
+window.trackCurrentResi = window.trackCurrentResi;
+
 
 // ============================================
 // SUPABASE AUTH & ADMIN LOGIC
