@@ -721,6 +721,40 @@ function startCameraScanner() {
   }
 }
 
+let expQrcodeScanner = null;
+
+function toggleExpeditionCamera(key) {
+  const container = document.getElementById('reader-expedition');
+  
+  if (expQrcodeScanner) {
+    // If running, stop it
+    expQrcodeScanner.clear().then(() => {
+      expQrcodeScanner = null;
+      container.style.display = 'none';
+    }).catch(err => console.error("Failed to clear expedition scanner", err));
+    return;
+  }
+
+  // Show container and start
+  container.style.display = 'block';
+  expQrcodeScanner = new Html5QrcodeScanner(
+    "reader-expedition",
+    { fps: 10, qrbox: { width: 250, height: 100 } },
+    false
+  );
+  
+  expQrcodeScanner.render((decodedText) => {
+    playSound('beep');
+    addResi(decodedText, 'scanFeedback', key); // Use explicitly passed key!
+    
+    // Pause briefly
+    expQrcodeScanner.pause();
+    setTimeout(() => {
+      if (expQrcodeScanner) expQrcodeScanner.resume();
+    }, 2000);
+  }, onScanFailure);
+}
+
 function onScanSuccess(decodedText, decodedResult) {
   playSound('beep');
   
@@ -1318,7 +1352,7 @@ function renderExpeditionDetail(key) {
       <button class="scan-btn" onclick="const i = document.getElementById('expDetailScanInput'); addResi(i.value, 'scanFeedback', '${key}'); i.value='';" style="padding: 10px 16px; font-size: 14px; min-height: 44px; white-space: nowrap;">
         ⚡ Tambah
       </button>
-      <button class="scan-mode-btn" onclick="navigateTo('scan'); setScanMode('camera'); setTimeout(()=> { const sel=document.getElementById('scanExpeditionSelect'); if(sel) sel.value='${key}'; }, 100);" style="padding: 10px; min-height: 44px; border-radius: 8px;" title="Scan menggunakan kamera">
+      <button class="scan-mode-btn" onclick="toggleExpeditionCamera('${key}')" style="padding: 10px; min-height: 44px; border-radius: 8px;" title="Buka Kamera di sini">
         📷
       </button>
     </div>
