@@ -1318,6 +1318,9 @@ function renderExpeditionDetail(key) {
       <button class="scan-btn" onclick="const i = document.getElementById('expDetailScanInput'); addResi(i.value, 'scanFeedback', '${key}'); i.value='';" style="padding: 10px 16px; font-size: 14px; min-height: 44px; white-space: nowrap;">
         ⚡ Tambah
       </button>
+      <button class="scan-mode-btn" onclick="navigateTo('scan'); setScanMode('camera'); setTimeout(()=> { const sel=document.getElementById('scanExpeditionSelect'); if(sel) sel.value='${key}'; }, 100);" style="padding: 10px; min-height: 44px; border-radius: 8px;" title="Scan menggunakan kamera">
+        📷
+      </button>
     </div>
   `;
 
