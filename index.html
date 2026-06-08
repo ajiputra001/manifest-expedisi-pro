@@ -183,6 +183,14 @@
             </div>
           </div>
 
+          <div style="margin-bottom: 15px;">
+            <label style="font-size: 12px; color: var(--text-muted); font-weight: 600; display: block; margin-bottom: 6px;">PILIH EKSPEDISI (OPSIONAL):</label>
+            <select id="scanExpeditionSelect" class="filter-select" style="width: 100%; max-width: 300px; padding: 10px 14px; font-size: 14px;">
+              <option value="AUTO">✨ Auto Detect (Otomatis)</option>
+              <!-- Options will be populated by JS -->
+            </select>
+          </div>
+
           <!-- Single Mode -->
           <div class="scan-input-wrapper" id="singleScanMode">
             <div class="scan-input-container">
@@ -250,6 +258,15 @@
               <button class="scan-mode-btn" onclick="setScanMode('bulk')">Bulk</button>
             </div>
           </div>
+
+          <div style="margin-bottom: 15px;">
+            <label style="font-size: 12px; color: var(--text-muted); font-weight: 600; display: block; margin-bottom: 6px;">PILIH EKSPEDISI (OPSIONAL):</label>
+            <select id="scanExpeditionSelectFocus" class="filter-select" style="width: 100%; max-width: 300px; padding: 10px 14px; font-size: 14px;">
+              <option value="AUTO">✨ Auto Detect (Otomatis)</option>
+              <!-- Options will be populated by JS -->
+            </select>
+          </div>
+
           <div class="scan-input-wrapper" id="singleScanModeFocus">
             <div class="scan-input-container">
               <input type="text" class="scan-input" id="resiInputFocus"
