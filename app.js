@@ -345,17 +345,53 @@ async function init() {
 async function syncPackageToSupabase(action, pkg) {
   try {
     if (!window.supabaseClient) return;
-    // Hapus field sementara yang tidak ada di database
-    const { selected, expedisi, timestamp, ...dbPkg } = pkg;
-    if (action === 'insert') await window.supabaseClient.from('packages').insert(dbPkg);
-    if (action === 'update') await window.supabaseClient.from('packages').update(dbPkg).eq('id', pkg.id);
-    if (action === 'delete') await window.supabaseClient.from('packages').delete().eq('id', pkg.id);
+    // Map fields specifically to match both the old and new schema
+    // If the database doesn't have the new columns yet, this will STILL throw an error
+    // which we will now prominently display to the user.
+    const dbPkg = {
+      id: pkg.id,
+      resi: pkg.resi,
+      expedition: pkg.expeditionKey || pkg.expedition,
+      timestamp: pkg.scannedAt || new Date().toISOString(),
+      // Advanced columns (will cause error if user hasn't run the SQL)
+      scanned_by_name: pkg.scanned_by_name,
+      printed: pkg.printed || false,
+      pickupStatus: pkg.pickupStatus || 'ready'
+    };
+
+    let errorObj = null;
+
+    if (action === 'insert') {
+      const { error } = await window.supabaseClient.from('packages').insert(dbPkg);
+      errorObj = error;
+    }
+    if (action === 'update') {
+      const { error } = await window.supabaseClient.from('packages').update(dbPkg).eq('id', pkg.id);
+      errorObj = error;
+    }
+    if (action === 'delete') {
+      const { error } = await window.supabaseClient.from('packages').delete().eq('id', pkg.id);
+      errorObj = error;
+    }
+
+    if (errorObj) {
+      console.error("Supabase Sync Error:", errorObj);
+      showToast("❌ Gagal Simpan ke Cloud: Kolom Database Belum Lengkap! Harap jalankan SQL Update.", "error");
+    }
   } catch (err) { console.warn('Sync error:', err.message); }
 }
 
 async function syncActivityToSupabase(act) {
   try {
-    await window.supabaseClient.from('activities').insert(act);
+    if (!window.supabaseClient) return;
+    const dbAct = {
+      id: generateId(),
+      type: act.type,
+      description: act.message, // FIX: Supabase table uses 'description', app uses 'message'
+      timestamp: act.timestamp
+    };
+    const { error } = await window.supabaseClient.from('activities').insert(dbAct);
+    if (error) console.error("Activity Sync Error:", error);
   } catch (err) { console.error(err); }
 }
 
