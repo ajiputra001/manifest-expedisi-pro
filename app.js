@@ -1033,9 +1033,12 @@ function renderAllPackagesTable() {
         </td>
         <td>
           <div class="action-btn-group">
+            <button class="row-action-btn" onclick="window.openDetailModal('${pkg.id}')" title="Detail & Tracking" style="background:rgba(59,130,246,0.15);border-color:rgba(59,130,246,0.4);color:#60a5fa;">
+              🔍
+            </button>
             <button class="row-action-btn" onclick="togglePrint('${pkg.id}')" title="Toggle Pickup">
               ${pkg.printed ? '⏳ Batal' : '✅ Tandai'}
-          </button>
+            </button>
             <button class="row-action-btn delete" onclick="confirmDelete('${pkg.id}')" title="Hapus">
               🗑️
             </button>
@@ -1132,6 +1135,7 @@ function renderUnprintedTable() {
         </td>
         <td>
         <div class="action-btn-group">
+          <button class="row-action-btn" onclick="window.openDetailModal('${pkg.id}')" title="Detail & Tracking" style="background:rgba(59,130,246,0.15);border-color:rgba(59,130,246,0.4);color:#60a5fa;">🔍</button>
           <button class="row-action-btn" onclick="togglePrint('${pkg.id}')" title="Tandai di Pickup">✅</button>
           <button class="row-action-btn" onclick="confirmDelete('${pkg.id}')" title="Hapus">🗑️</button>
         </div>
