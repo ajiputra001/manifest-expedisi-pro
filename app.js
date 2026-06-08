@@ -430,7 +430,21 @@ async function loadFromStorage() {
     }
 
     if (pkgs && pkgs.length > 0) {
-      packages = pkgs;
+      // Map data to ensure compatibility with older database schema
+      packages = pkgs.map(p => ({
+        id: p.id,
+        resi: p.resi,
+        expeditionKey: p.expeditionKey || p.expedition,
+        expeditionName: p.expeditionName || (EXPEDITIONS[p.expedition] ? EXPEDITIONS[p.expedition].name : p.expedition),
+        scannedAt: p.scannedAt || p.timestamp,
+        printed: p.printed || false,
+        pickupStatus: p.pickupStatus || 'ready',
+        selected: false,
+        scanned_by: p.scanned_by || null,
+        scanned_by_name: p.scanned_by_name || 'Admin'
+      }));
+      // Sort manually just in case fallback was used
+      packages.sort((a, b) => new Date(b.scannedAt) - new Date(a.scannedAt));
       saveToStorage(); // update localStorage dari data cloud
     }
 
