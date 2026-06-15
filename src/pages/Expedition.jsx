@@ -11,6 +11,22 @@ import { Barcode, Search, Plus, QrCode, FileDown, Calendar, ChevronDown, Package
 import TrackingModal from '../components/TrackingModal';
 import { playSystemSound } from '../utils/audio';
 
+const validateResiPrefix = (resi, courier) => {
+    if (!resi || !courier) return true;
+    const upperResi = resi.toUpperCase();
+    const c = courier.toUpperCase();
+    
+    if (c === 'SPX' && !upperResi.startsWith('SPXID')) return false;
+    if (c === 'JNT' && !upperResi.startsWith('JX')) return false;
+    if (c === 'JNE' && !upperResi.startsWith('CM')) return false;
+    if (c === 'SICEPAT' && !upperResi.startsWith('004')) return false;
+    if (c === 'POS' && !upperResi.startsWith('SHPE')) return false;
+    if (c === 'IDE' && !upperResi.startsWith('IDS')) return false;
+    if (c === 'ANTERAJA' && !(upperResi.startsWith('1000') || upperResi.startsWith('1100'))) return false;
+    
+    return true;
+};
+
 const Expedition = () => {
     const { courierId } = useParams();
     const [searchParams, setSearchParams] = useSearchParams();
@@ -146,6 +162,18 @@ const Expedition = () => {
     const handleSubmit = (e) => {
         e.preventDefault();
         const upperAwb = awb.trim().toUpperCase();
+
+        if (!validateResiPrefix(upperAwb, courierId)) {
+            playSystemSound('error');
+            Swal.fire({
+                icon: 'error',
+                title: 'Salah Ekspedisi!',
+                text: `Resi ${upperAwb} bukan milik ${courierName}. Pastikan input di menu yang tepat!`,
+                background: '#18181b', color: '#fff', confirmButtonColor: '#ef4444'
+            });
+            return;
+        }
+
         const existing = packages.find(item => item.resi === upperAwb && item.expedition === courierId);
         if (existing) {
             playSystemSound('double');
@@ -186,6 +214,20 @@ const Expedition = () => {
                 setAwb(decodedText);
                 
                 const upperAwb = decodedText.trim().toUpperCase();
+
+                if (!validateResiPrefix(upperAwb, courierId)) {
+                    playSystemSound('error');
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Salah Ekspedisi!',
+                        text: `Resi ${upperAwb} bukan milik ${courierName}.`,
+                        toast: true, position: 'top-end', showConfirmButton: false, timer: 4000,
+                        background: '#18181b', color: '#ef4444'
+                    });
+                    setTimeout(() => { lastScannedRef.current = null; }, 3000);
+                    return;
+                }
+
                 const existing = packagesRef.current.find(item => item.resi === upperAwb && item.expedition === courierId);
                 
                 if (existing) {
