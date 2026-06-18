@@ -10,6 +10,7 @@ import { Sparkles, PackageOpen, CheckCircle, Truck, AlertTriangle, Clock, BarCha
 import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import TrackingModal from '../components/TrackingModal';
+import { motion } from 'framer-motion';
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title);
 
@@ -74,10 +75,28 @@ const Dashboard = () => {
 
     if (isLoading) return <div className="animate-pulse flex items-center justify-center h-full"><div className="w-8 h-8 border-4 border-amber-500 border-t-transparent rounded-full animate-spin"></div></div>;
 
+    const containerVariants = {
+        hidden: { opacity: 0 },
+        visible: {
+            opacity: 1,
+            transition: { staggerChildren: 0.1 }
+        }
+    };
+
+    const itemVariants = {
+        hidden: { opacity: 0, y: 20 },
+        visible: { opacity: 1, y: 0 }
+    };
+
     return (
-        <div className="space-y-6 fade-in">
+        <motion.div 
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            className="space-y-6"
+        >
             {/* Welcome Banner */}
-            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-amber-900/40 via-zinc-900/80 to-zinc-950 border border-amber-500/20 p-8 shadow-2xl group">
+            <motion.div variants={itemVariants} className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-amber-900/40 via-zinc-900/80 to-zinc-950 border border-amber-500/20 p-8 shadow-2xl group">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/10 blur-[80px] rounded-full -translate-y-1/2 translate-x-1/2 pointer-events-none group-hover:bg-amber-500/20 transition-all duration-700"></div>
                 <Truck className="absolute -right-6 -bottom-10 w-48 h-48 text-amber-500/5 -rotate-12 group-hover:rotate-0 transition-all duration-700" />
                 <div className="relative z-10">
@@ -87,17 +106,17 @@ const Dashboard = () => {
                     </h2>
                     <p className="text-zinc-400 text-sm max-w-xl leading-relaxed">Pantau terus pergerakan paket dan kinerja toko Anda hari ini. Semua data tersinkronisasi secara langsung (real-time) dengan server.</p>
                 </div>
-            </div>
+            </motion.div>
 
             {/* Stat Cards */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+            <motion.div variants={itemVariants} className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
                 {[
                     { label: 'Semua Resi', value: total, icon: PackageOpen, color: 'zinc', shadow: 'from-zinc-800 to-zinc-900', badge: 'Hari Ini' },
                     { label: 'Terkirim', value: delivered, icon: CheckCircle, color: 'emerald', shadow: 'from-zinc-800 to-zinc-900' },
                     { label: 'Diproses', value: process, icon: Truck, color: 'amber', shadow: 'from-zinc-800 to-zinc-900' },
                     { label: 'Bermasalah', value: problem, icon: AlertTriangle, color: 'rose', shadow: 'from-zinc-800 to-zinc-900' },
                 ].map((stat, i) => (
-                    <div key={i} className={`bg-zinc-900/60 backdrop-blur-md rounded-3xl border border-zinc-800/50 p-6 shadow-xl relative overflow-hidden group hover:border-${stat.color}-500/30 transition-all duration-500 hover:-translate-y-1`}>
+                    <motion.div whileHover={{ scale: 1.02 }} key={i} className={`bg-zinc-900/60 backdrop-blur-md rounded-3xl border border-zinc-800/50 p-6 shadow-xl relative overflow-hidden group hover:border-${stat.color}-500/30 transition-all duration-500`}>
                         <div className={`absolute -right-4 -top-4 w-24 h-24 bg-${stat.color}-500/10 rounded-full blur-2xl group-hover:bg-${stat.color}-500/20 transition-all duration-500`}></div>
                         <div className="flex justify-between items-start mb-4 relative z-10">
                             <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${stat.shadow} flex items-center justify-center border border-zinc-700/50 shadow-inner group-hover:border-${stat.color}-500/30 transition-colors`}>
@@ -107,11 +126,11 @@ const Dashboard = () => {
                         </div>
                         <h3 className="text-4xl font-black text-white mb-1 tracking-tight relative z-10">{stat.value}</h3>
                         <p className="text-[11px] font-bold text-zinc-500 uppercase tracking-widest relative z-10">{stat.label}</p>
-                    </div>
+                    </motion.div>
                 ))}
-            </div>
+            </motion.div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+            <motion.div variants={itemVariants} className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
                 <div className="lg:col-span-2 bg-zinc-900/40 backdrop-blur-md p-6 md:p-8 rounded-3xl border border-zinc-800/50 shadow-xl flex flex-col">
                     <h3 className="font-black text-lg text-white mb-6 flex items-center gap-3">
                         <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center"><Clock className="w-4 h-4 text-blue-400" /></div>
@@ -158,9 +177,9 @@ const Dashboard = () => {
                         <Doughnut data={doughnutData} options={{ maintainAspectRatio: false, cutout: '78%', plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, padding: 20, color: '#a1a1aa', font: { weight: 'bold', size: 10 } } } } }} />
                     </div>
                 </div>
-            </div>
+            </motion.div>
 
-            <div className="bg-zinc-900/40 backdrop-blur-md p-6 md:p-8 rounded-3xl border border-zinc-800/50 shadow-xl flex flex-col relative overflow-hidden group">
+            <motion.div variants={itemVariants} className="bg-zinc-900/40 backdrop-blur-md p-6 md:p-8 rounded-3xl border border-zinc-800/50 shadow-xl flex flex-col relative overflow-hidden group">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:bg-amber-500/10 transition-colors"></div>
                 <h3 className="font-black text-lg text-white mb-6 flex items-center gap-3 relative z-10">
                     <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center"><BarChart3 className="w-4 h-4 text-amber-500" /></div>
@@ -169,7 +188,7 @@ const Dashboard = () => {
                 <div className="w-full h-64 relative flex justify-center items-center z-10">
                     <Bar data={barData} options={{ maintainAspectRatio: false, scales: { y: { beginAtZero: true, grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#a1a1aa', stepSize: 1 } }, x: { grid: { display: false }, ticks: { color: '#a1a1aa', font: { size: 10 } } } }, plugins: { legend: { display: false } } }} />
                 </div>
-            </div>
+            </motion.div>
 
             {trackModal.isOpen && (
                 <TrackingModal 
@@ -178,7 +197,7 @@ const Dashboard = () => {
                     onClose={() => setTrackModal({ isOpen: false, resi: null, courier: null })} 
                 />
             )}
-        </div>
+        </motion.div>
     );
 };
 

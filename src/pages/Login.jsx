@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import Swal from 'sweetalert2';
 import { Box, Truck, Zap, Store, User, Lock, Eye, EyeOff, MapPin, Phone, LogIn, UserPlus } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const Login = () => {
     const { login, register } = useAuth();
@@ -25,9 +26,7 @@ const Login = () => {
                 await login(formData.username, formData.password);
                 navigate('/');
             } else {
-                const newId = 'user-' + Date.now();
                 const newUser = {
-                    id: newId, 
                     name: formData.name, 
                     username: formData.username, 
                     password: formData.password,
@@ -57,7 +56,12 @@ const Login = () => {
                 <Truck className="absolute bottom-[25%] right-[15%] text-zinc-700/30 w-16 h-16 animate-float" style={{animationDelay: '1s'}} />
             </div>
 
-            <div className="w-full max-w-sm bg-white/[0.02] border border-white/10 rounded-[2rem] p-6 md:p-8 shadow-[0_8px_32px_rgba(0,0,0,0.3)] backdrop-blur-3xl relative z-10 overflow-hidden fade-in">
+            <motion.div 
+                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                transition={{ duration: 0.5, ease: "easeOut" }}
+                className="w-full max-w-sm bg-white/[0.02] border border-white/10 rounded-[2rem] p-6 md:p-8 shadow-[0_8px_32px_rgba(0,0,0,0.3)] backdrop-blur-3xl relative z-10 overflow-hidden"
+            >
                 <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/10 blur-[80px] rounded-full -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
                 <div className="text-center mb-8 relative">
                     <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 mx-auto flex items-center justify-center mb-4 shadow-[0_0_30px_rgba(245,158,11,0.3)]">
@@ -71,31 +75,39 @@ const Login = () => {
 
                 <form onSubmit={handleSubmit} className="space-y-3">
                     <div className="space-y-3">
-                        {!isLoginMode && (
-                            <div className="space-y-3 fade-in">
-                                <div>
-                                    <label className="block text-[9px] font-bold text-zinc-400 uppercase tracking-[0.2em] mb-1.5">Nama Entitas Bisnis / Toko</label>
-                                    <div className="relative group">
-                                        <Store className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500 group-focus-within:text-amber-500 transition-colors w-4 h-4" />
-                                        <input type="text" name="name" required={!isLoginMode} value={formData.name} onChange={handleChange} className="w-full bg-white/[0.03] border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-xs font-medium text-white placeholder-zinc-600 focus:outline-none focus:border-amber-500/50 focus:bg-white/[0.05] focus:shadow-[0_0_20px_rgba(245,158,11,0.15)] transition-all" placeholder="Misal: Toko Berkah" />
+                        <AnimatePresence>
+                            {!isLoginMode && (
+                                <motion.div 
+                                    initial={{ opacity: 0, height: 0, overflow: 'hidden' }}
+                                    animate={{ opacity: 1, height: 'auto', overflow: 'visible' }}
+                                    exit={{ opacity: 0, height: 0, overflow: 'hidden' }}
+                                    transition={{ duration: 0.3 }}
+                                    className="space-y-3"
+                                >
+                                    <div>
+                                        <label className="block text-[9px] font-bold text-zinc-400 uppercase tracking-[0.2em] mb-1.5">Nama Entitas Bisnis / Toko</label>
+                                        <div className="relative group">
+                                            <Store className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500 group-focus-within:text-amber-500 transition-colors w-4 h-4" />
+                                            <input type="text" name="name" required={!isLoginMode} value={formData.name} onChange={handleChange} className="w-full bg-white/[0.03] border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-xs font-medium text-white placeholder-zinc-600 focus:outline-none focus:border-amber-500/50 focus:bg-white/[0.05] focus:shadow-[0_0_20px_rgba(245,158,11,0.15)] transition-all" placeholder="Misal: Toko Berkah" />
+                                        </div>
                                     </div>
-                                </div>
-                                <div>
-                                    <label className="block text-[9px] font-bold text-zinc-400 uppercase tracking-[0.2em] mb-1.5">No. WhatsApp</label>
-                                    <div className="relative group">
-                                        <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500 group-focus-within:text-emerald-500 transition-colors w-4 h-4" />
-                                        <input type="tel" name="phone" required={!isLoginMode} value={formData.phone} onChange={handleChange} className="w-full bg-white/[0.03] border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-xs font-medium text-white placeholder-zinc-600 focus:outline-none focus:border-emerald-500/50 focus:bg-white/[0.05] focus:shadow-[0_0_20px_rgba(16,185,129,0.15)] transition-all" placeholder="08123456789" />
+                                    <div>
+                                        <label className="block text-[9px] font-bold text-zinc-400 uppercase tracking-[0.2em] mb-1.5">No. WhatsApp</label>
+                                        <div className="relative group">
+                                            <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500 group-focus-within:text-emerald-500 transition-colors w-4 h-4" />
+                                            <input type="tel" name="phone" required={!isLoginMode} value={formData.phone} onChange={handleChange} className="w-full bg-white/[0.03] border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-xs font-medium text-white placeholder-zinc-600 focus:outline-none focus:border-emerald-500/50 focus:bg-white/[0.05] focus:shadow-[0_0_20px_rgba(16,185,129,0.15)] transition-all" placeholder="08123456789" />
+                                        </div>
                                     </div>
-                                </div>
-                                <div>
-                                    <label className="block text-[9px] font-bold text-zinc-400 uppercase tracking-[0.2em] mb-1.5">Alamat Toko</label>
-                                    <div className="relative group">
-                                        <MapPin className="absolute left-4 top-3 text-zinc-500 group-focus-within:text-rose-400 transition-colors w-4 h-4" />
-                                        <textarea name="address" rows="2" required={!isLoginMode} value={formData.address} onChange={handleChange} className="w-full bg-white/[0.03] border border-white/10 rounded-xl pl-10 pr-4 py-2 text-xs font-medium text-white placeholder-zinc-600 focus:outline-none focus:border-rose-400/50 focus:bg-white/[0.05] focus:shadow-[0_0_20px_rgba(244,63,94,0.15)] transition-all resize-none" placeholder="Masukkan alamat lengkap toko"></textarea>
+                                    <div>
+                                        <label className="block text-[9px] font-bold text-zinc-400 uppercase tracking-[0.2em] mb-1.5">Alamat Toko</label>
+                                        <div className="relative group">
+                                            <MapPin className="absolute left-4 top-3 text-zinc-500 group-focus-within:text-rose-400 transition-colors w-4 h-4" />
+                                            <textarea name="address" rows="2" required={!isLoginMode} value={formData.address} onChange={handleChange} className="w-full bg-white/[0.03] border border-white/10 rounded-xl pl-10 pr-4 py-2 text-xs font-medium text-white placeholder-zinc-600 focus:outline-none focus:border-rose-400/50 focus:bg-white/[0.05] focus:shadow-[0_0_20px_rgba(244,63,94,0.15)] transition-all resize-none" placeholder="Masukkan alamat lengkap toko"></textarea>
+                                        </div>
                                     </div>
-                                </div>
-                            </div>
-                        )}
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
 
                         <div>
                             <label className="block text-[9px] font-bold text-zinc-400 uppercase tracking-[0.2em] mb-1.5">ID Pengguna (Username)</label>
@@ -131,7 +143,7 @@ const Login = () => {
                         </button>
                     </p>
                 </div>
-            </div>
+            </motion.div>
         </div>
     );
 };

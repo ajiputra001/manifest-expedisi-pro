@@ -4,6 +4,7 @@ import { supabase } from '../services/supabaseClient';
 import Swal from 'sweetalert2';
 import moment from 'moment';
 import { Trophy, Users, UserCheck, Flame, CircleDashed, Check, X } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 const AdminPanel = () => {
     const queryClient = useQueryClient();
@@ -56,10 +57,28 @@ const AdminPanel = () => {
     const handleApprove = (id) => updateStatusMutation.mutate({ id, status: 'approved' });
     const handleReject = (id) => updateStatusMutation.mutate({ id, status: 'rejected' });
 
+    const containerVariants = {
+        hidden: { opacity: 0 },
+        visible: {
+            opacity: 1,
+            transition: { staggerChildren: 0.1 }
+        }
+    };
+
+    const itemVariants = {
+        hidden: { opacity: 0, y: 20 },
+        visible: { opacity: 1, y: 0 }
+    };
+
     return (
-        <div className="space-y-6 fade-in">
+        <motion.div 
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            className="space-y-6"
+        >
             {/* Leaderboard */}
-            <div className="bg-zinc-950/50 backdrop-blur-sm border border-zinc-800/60 rounded-3xl p-6 shadow-2xl relative overflow-hidden group">
+            <motion.div variants={itemVariants} className="bg-zinc-950/50 backdrop-blur-sm border border-zinc-800/60 rounded-3xl p-6 shadow-2xl relative overflow-hidden group">
                 <div className="absolute top-0 left-0 w-64 h-64 bg-emerald-500/5 rounded-full blur-3xl -translate-y-1/2 -translate-x-1/2 group-hover:bg-emerald-500/10 transition-colors pointer-events-none"></div>
                 <div className="flex items-center gap-3 mb-6 relative z-10">
                     <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center">
@@ -115,10 +134,10 @@ const AdminPanel = () => {
                         </tbody>
                     </table>
                 </div>
-            </div>
+            </motion.div>
 
             {/* Pending Users */}
-            <div className="bg-zinc-950/50 backdrop-blur-sm border border-zinc-800/60 rounded-3xl p-6 shadow-2xl">
+            <motion.div variants={itemVariants} className="bg-zinc-950/50 backdrop-blur-sm border border-zinc-800/60 rounded-3xl p-6 shadow-2xl">
                 <div className="flex items-center gap-3 mb-6">
                     <div className="w-10 h-10 rounded-xl bg-orange-600/10 border border-orange-600/30 flex items-center justify-center">
                         <Users className="text-orange-500 w-5 h-5" />
@@ -160,10 +179,10 @@ const AdminPanel = () => {
                         </tbody>
                     </table>
                 </div>
-            </div>
+            </motion.div>
 
             {/* Active Users */}
-            <div className="bg-zinc-950/50 backdrop-blur-sm border border-zinc-800/60 rounded-3xl p-6 shadow-2xl">
+            <motion.div variants={itemVariants} className="bg-zinc-950/50 backdrop-blur-sm border border-zinc-800/60 rounded-3xl p-6 shadow-2xl">
                 <div className="flex items-center gap-3 mb-6">
                     <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center">
                         <UserCheck className="text-emerald-500 w-5 h-5" />
@@ -198,8 +217,8 @@ const AdminPanel = () => {
                         </tbody>
                     </table>
                 </div>
-            </div>
-        </div>
+            </motion.div>
+        </motion.div>
     );
 };
 

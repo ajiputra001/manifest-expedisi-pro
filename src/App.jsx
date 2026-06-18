@@ -1,12 +1,23 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Layout from './components/Layout';
-import Dashboard from './pages/Dashboard';
-import Expedition from './pages/Expedition';
-import AdminPanel from './pages/AdminPanel';
-import Login from './pages/Login';
+
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const Expedition = lazy(() => import('./pages/Expedition'));
+const AdminPanel = lazy(() => import('./pages/AdminPanel'));
+const Login = lazy(() => import('./pages/Login'));
+
+const PageLoader = () => (
+  <div className="h-screen w-full bg-zinc-950 flex flex-col items-center justify-center gap-4">
+    <div className="relative flex items-center justify-center">
+      <div className="absolute animate-ping w-12 h-12 rounded-full bg-amber-500/20"></div>
+      <div className="animate-spin w-10 h-10 border-4 border-zinc-800 border-t-amber-500 rounded-full z-10"></div>
+    </div>
+    <div className="text-zinc-500 text-sm font-medium tracking-widest animate-pulse">MEMUAT...</div>
+  </div>
+);
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -51,16 +62,18 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <Router>
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            
-            <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
-              <Route index element={<Dashboard />} />
-              <Route path="expedition/:courierId" element={<Expedition />} />
-              <Route path="admin" element={<ProtectedRoute requiredRole="admin"><AdminPanel /></ProtectedRoute>} />
-            </Route>
-            
-          </Routes>
+          <Suspense fallback={<PageLoader />}>
+            <Routes>
+              <Route path="/login" element={<Login />} />
+              
+              <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+                <Route index element={<Dashboard />} />
+                <Route path="expedition/:courierId" element={<Expedition />} />
+                <Route path="admin" element={<ProtectedRoute requiredRole="admin"><AdminPanel /></ProtectedRoute>} />
+              </Route>
+              
+            </Routes>
+          </Suspense>
         </Router>
       </AuthProvider>
     </QueryClientProvider>

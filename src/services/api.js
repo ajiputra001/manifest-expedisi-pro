@@ -29,6 +29,58 @@ export const trackResi = async (courier, awb, forceRefresh = false) => {
         }
     }
 
+    // --- INTERCEPTOR UNTUK API LOKAL SHOPEE EXPRESS ---
+    if (normalizeExpedition(courier) === 'SPX') {
+        const response = await axios.get(`https://shopee-express-tracking-api-ajiputra.onrender.com/api/track`, {
+            params: { resi: awb }
+        });
+        
+        if (response.data && response.data.retcode === 0 && response.data.data) {
+            const spxData = response.data.data;
+            
+            // Map tracking_list ke format Binderbyte (history)
+            const mappedHistory = (spxData.tracking_list || []).map(t => {
+                // Ekstrak lokasi jika ada di dalam kurung siku, misal: "[Jakarta] Paket tiba"
+                let locationStr = '';
+                let cleanDesc = t.message;
+                const match = t.message.match(/^\[(.*?)\]\s*(.*)/);
+                if (match) {
+                    locationStr = match[1];
+                    cleanDesc = match[2] || t.message; // Deskripsi tanpa nama lokasi
+                }
+                
+                return {
+                    date: new Date(t.timestamp * 1000).toISOString(),
+                    desc: cleanDesc,
+                    location: locationStr
+                };
+            });
+            
+            // Buat struktur palsu yang meniru Binderbyte
+            const simulatedData = {
+                status: 200,
+                message: "Successfully tracked package",
+                data: {
+                    summary: { 
+                        awb: awb,
+                        courier: "Shopee Express",
+                        status: spxData.current_status || 'PROSES' 
+                    },
+                    history: mappedHistory
+                }
+            };
+            
+            const dataToCache = { ...simulatedData, timestamp: new Date().getTime() };
+            localStorage.setItem(cacheKey, JSON.stringify(dataToCache));
+            
+            return simulatedData;
+        } else {
+            throw { message: response.data?.message || 'Resi SPX tidak ditemukan atau bermasalah' };
+        }
+    }
+    // --- AKHIR INTERCEPTOR ---
+
+    // Jika bukan SPX, tetap gunakan Binderbyte
     const response = await axios.get(`https://api.binderbyte.com/v1/track`, {
       params: {
         api_key: BINDERBYTE_API_KEY,
@@ -44,7 +96,7 @@ export const trackResi = async (courier, awb, forceRefresh = false) => {
 
     return response.data;
   } catch (error) {
-    throw error.response?.data || { message: 'Gagal terhubung ke server pelacakan' };
+    throw error.response?.data || error || { message: 'Gagal terhubung ke server pelacakan' };
   }
 };
 
@@ -53,20 +105,13 @@ export const getStatusCategory = (status) => {
     const s = status.toUpperCase();
     if (s.includes('DELIVERED') || s.includes('TERKIRIM') || s.includes('SUCCESS')) return 'TERKIRIM';
     if (s.includes('RETUR') || s.includes('GAGAL') || s.includes('CANCEL') || s.includes('INVALID')) return 'RETUR';
+    if (s.includes('DIKIRIM') || s.includes('DELIVERING') || s.includes('OUT FOR DELIVERY') || s.includes('KURIR') || s.includes('PERJALANAN')) return 'DIKIRIM';
     return 'PROSES';
 };
 
 export const MASTER_COURIERS = {
     SPX: { name: 'Shopee Express' },
-    JNT: { name: 'J&T Express' },
-    JNTCARGO: { name: 'J&T Cargo' },
-    SICEPAT: { name: 'SiCepat' },
-    JNE: { name: 'JNE Express' },
-    TIKI: { name: 'TIKI' },
-    POS: { name: 'Pos Indonesia' },
-    ANTERAJA: { name: 'AnterAja' },
-    NINJA: { name: 'Ninja Xpress' },
-    IDE: { name: 'ID Express' }
+    JNT: { name: 'J&T Express' }
 };
 
 export const normalizeExpedition = (exp) => {

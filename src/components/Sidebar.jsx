@@ -33,6 +33,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
         const s = status.toUpperCase();
         if (s.includes('DELIVERED') || s.includes('TERKIRIM') || s.includes('SUCCESS')) return 'TERKIRIM';
         if (s.includes('RETUR') || s.includes('GAGAL') || s.includes('CANCEL') || s.includes('INVALID')) return 'RETUR';
+        if (s.includes('DIKIRIM') || s.includes('DELIVERING') || s.includes('OUT FOR DELIVERY') || s.includes('KURIR') || s.includes('PERJALANAN')) return 'DIKIRIM';
         return 'PROSES';
     };
 
@@ -45,11 +46,12 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
 
         let exp = normalizeExpedition(x.expedition || 'UNKNOWN');
 
-        if(!groupsData[exp]) groupsData[exp] = { total: 0, delivered: 0, process: 0, retur: 0 };
+        if(!groupsData[exp]) groupsData[exp] = { total: 0, delivered: 0, dikirim: 0, process: 0, retur: 0 };
         groupsData[exp].total++;
         const cat = getStatusCategory(x.pickupstatus);
         if(cat === 'TERKIRIM') groupsData[exp].delivered++;
         else if(cat === 'RETUR') groupsData[exp].retur++;
+        else if(cat === 'DIKIRIM') groupsData[exp].dikirim++;
         else groupsData[exp].process++;
     });
 
@@ -64,15 +66,14 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
         }
     };
 
-    const toggleCourier = (cId) => {
+    const toggleCourier = (e, cId) => {
+        e.preventDefault();
+        e.stopPropagation();
         if (openCourierMenu === cId) {
             setOpenCourierMenu(null);
-            navigate('/');
         } else {
             setOpenCourierMenu(cId);
-            navigate(`/expedition/${cId}`);
         }
-        closeOnMobile();
     };
 
     const isExpeditionActive = (cId) => location.pathname.includes(`/expedition/${cId}`);
@@ -116,7 +117,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
                             
                             return (
                                 <div key={cId} className="flex flex-col relative group">
-                                    <button onClick={() => toggleCourier(cId)} className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all duration-200 overflow-hidden ${isActive ? 'bg-zinc-800/80 text-white font-bold' : 'text-zinc-400 hover:bg-zinc-800/50 hover:text-white'}`}>
+                                    <button onClick={(e) => toggleCourier(e, cId)} className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all duration-200 overflow-hidden ${isActive ? 'bg-zinc-800/80 text-white font-bold' : 'text-zinc-400 hover:bg-zinc-800/50 hover:text-white'}`}>
                                         <div className="flex items-center gap-3">
                                             <Truck className="w-4 h-4 min-w-[20px]" />
                                             <span className="text-sm whitespace-nowrap">{cName}</span>
@@ -126,15 +127,23 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
                                             <ChevronDown className={`w-3 h-3 transition-transform duration-300 ${isOpenMenu ? 'rotate-180' : ''}`} />
                                         </div>
                                     </button>
-                                    <div className={`overflow-hidden transition-all duration-300 ${isOpenMenu ? 'max-h-40 mt-1 opacity-100' : 'max-h-0 opacity-0'}`}>
+                                    <div className={`overflow-hidden transition-all duration-300 ${isOpenMenu ? 'max-h-48 mt-1 opacity-100' : 'max-h-0 opacity-0'}`}>
                                         <div className="pl-11 pr-3 py-2 space-y-2 border-l border-zinc-800 ml-5">
-                                            <div onClick={() => { navigate(`/expedition/${cId}?filter=TERKIRIM`); closeOnMobile(); }} className="flex items-center justify-between text-xs text-zinc-500 cursor-pointer hover:text-emerald-400">
-                                                <span>Terkirim</span>
-                                                {data.delivered > 0 && <span className="bg-emerald-500/20 text-emerald-400 px-1.5 rounded text-[9px]">{data.delivered}</span>}
+                                            <div onClick={() => { navigate(`/expedition/${cId}`); closeOnMobile(); }} className="flex items-center justify-between text-xs text-zinc-500 cursor-pointer hover:text-white">
+                                                <span>Semua</span>
+                                                {data.total > 0 && <span className="bg-white/20 text-white px-1.5 rounded text-[9px]">{data.total}</span>}
                                             </div>
                                             <div onClick={() => { navigate(`/expedition/${cId}?filter=PROSES`); closeOnMobile(); }} className="flex items-center justify-between text-xs text-zinc-500 cursor-pointer hover:text-amber-400">
                                                 <span>Proses</span>
                                                 {data.process > 0 && <span className="bg-amber-500/20 text-amber-400 px-1.5 rounded text-[9px]">{data.process}</span>}
+                                            </div>
+                                            <div onClick={() => { navigate(`/expedition/${cId}?filter=DIKIRIM`); closeOnMobile(); }} className="flex items-center justify-between text-xs text-zinc-500 cursor-pointer hover:text-blue-400">
+                                                <span>Dikirim</span>
+                                                {data.dikirim > 0 && <span className="bg-blue-500/20 text-blue-400 px-1.5 rounded text-[9px]">{data.dikirim}</span>}
+                                            </div>
+                                            <div onClick={() => { navigate(`/expedition/${cId}?filter=TERKIRIM`); closeOnMobile(); }} className="flex items-center justify-between text-xs text-zinc-500 cursor-pointer hover:text-emerald-400">
+                                                <span>Terkirim</span>
+                                                {data.delivered > 0 && <span className="bg-emerald-500/20 text-emerald-400 px-1.5 rounded text-[9px]">{data.delivered}</span>}
                                             </div>
                                             <div onClick={() => { navigate(`/expedition/${cId}?filter=RETUR`); closeOnMobile(); }} className="flex items-center justify-between text-xs text-zinc-500 cursor-pointer hover:text-rose-400">
                                                 <span>Retur</span>

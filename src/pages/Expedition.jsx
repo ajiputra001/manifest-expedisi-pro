@@ -6,10 +6,11 @@ import { supabase } from '../services/supabaseClient';
 import { trackResi, getStatusCategory, MASTER_COURIERS, normalizeExpedition } from '../services/api';
 import moment from 'moment';
 import Swal from 'sweetalert2';
-import { Html5Qrcode } from 'html5-qrcode';
 import { Barcode, Search, Plus, QrCode, FileDown, Calendar, ChevronDown, Package, History, Trash2, PackageOpen, XCircle, Copy, RefreshCw } from 'lucide-react';
 import TrackingModal from '../components/TrackingModal';
 import { playSystemSound } from '../utils/audio';
+import ScannerCamera from '../components/expedition/ScannerCamera';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const validateResiPrefix = (resi, courier) => {
     if (!resi || !courier) return true;
@@ -71,11 +72,67 @@ const Expedition = () => {
                 apiRes = await trackResi(courierId, newAwb);
                 if (apiRes.status === 200) {
                     apiStatus = apiRes.data?.summary?.status?.toUpperCase() || "PROSES";
+                    
+                    const category = getStatusCategory(apiStatus);
+                    let isCancelled = category === 'RETUR' || apiStatus.includes('CANCEL');
+                    
+                    if (!isCancelled && apiRes.data?.history) {
+                        for (let h of apiRes.data.history) {
+                            const desc = (h.desc || '').toUpperCase();
+                            if (desc.includes('CANCEL') || desc.includes('BATAL') || desc.includes('RETUR')) {
+                                isCancelled = true;
+                                apiStatus = desc; // Gunakan deskripsi pembatalan
+                                break;
+                            }
+                        }
+                    }
+
+                    if (isCancelled) {
+                        const err = new Error(apiStatus); // Status pembatalan sebagai message
+                        err.isCancelError = true;
+                        err.resi = newAwb;
+                        throw err;
+                    }
+
+                    // Cek apakah resi sudah jalan
+                    let isAlreadyMoved = false;
+                    let movedStatus = '';
+                    
+                    if (!isCancelled && apiRes.data?.history && apiRes.data.history.length > 0) {
+                        const latestDesc = (apiRes.data.history[0].desc || '').toUpperCase();
+                        
+                        const movingKeywords = [
+                            'DC_', 'DC ', 'DIBERANGKATKAN', 'TIBA DI', 'MENUJU', 'KELUAR DARI', 
+                            'TRANSIT', 'SORTIR', 'SORTATION', 'HUB', 'GATEWAY', 'SEDANG DIKIRIM', 
+                            'DIKIRIMKAN KE', 'PERJALANAN', 'TELAH DITERIMA OLEH DC'
+                        ];
+                        
+                        if (movingKeywords.some(kw => latestDesc.includes(kw))) {
+                            isAlreadyMoved = true;
+                            movedStatus = latestDesc;
+                        } else if (courierId.toUpperCase() === 'JNT') {
+                            // Sesuai instruksi: hanya izinkan jika status terakhirnya "MANIFES" doang
+                            if (!latestDesc.includes('MANIFES')) {
+                                isAlreadyMoved = true;
+                                movedStatus = latestDesc;
+                            }
+                        }
+                    }
+
+                    if (isAlreadyMoved) {
+                        const err = new Error(movedStatus);
+                        err.isMovedError = true;
+                        err.resi = newAwb;
+                        throw err;
+                    }
                 } else {
                     hasApiError = true;
                     apiMessage = apiRes.message || 'Gagal melacak resi';
                 }
             } catch (err) {
+                if (err.isCancelError || err.isMovedError) {
+                    throw err; // Lempar ke onError agar tidak disimpan
+                }
                 hasApiError = true;
                 apiMessage = err.message || 'Gagal melacak resi';
                 console.warn('Disimpan offline:', apiMessage);
@@ -110,7 +167,34 @@ const Expedition = () => {
         },
         onError: (err) => {
             playSystemSound('error');
-            Swal.fire({ icon: 'error', title: 'Gagal Menyimpan', text: err.message, background: '#18181b', color: '#ef4444' });
+            
+            if (err.isCancelError) {
+                Swal.fire({ 
+                    icon: 'warning', 
+                    title: 'Resi Ditolak!', 
+                    html: `<div class="text-sm mt-2 text-zinc-400 text-left space-y-2"><p>Nomor resi <strong class="text-rose-500 tracking-wider">${err.resi}</strong> langsung ditolak oleh sistem karena terdeteksi bermasalah.</p><div class="bg-rose-500/10 border border-rose-500/20 p-3 rounded-xl mt-3"><p class="text-[10px] uppercase text-rose-500 font-bold mb-1">Keterangan:</p><p class="text-rose-400 font-black tracking-wide">${err.message}</p></div></div>`,
+                    background: '#18181b', 
+                    color: '#fff',
+                    confirmButtonColor: '#f59e0b' 
+                });
+            } else if (err.isMovedError) {
+                Swal.fire({ 
+                    icon: 'warning', 
+                    title: 'Sudah Berjalan (Double)!', 
+                    html: `<div class="text-sm mt-2 text-zinc-400 text-left space-y-2"><p>Nomor resi <strong class="text-amber-500 tracking-wider">${err.resi}</strong> ditolak karena terdeteksi sudah jalan atau discan di tempat lain.</p><div class="bg-amber-500/10 border border-amber-500/20 p-3 rounded-xl mt-3"><p class="text-[10px] uppercase text-amber-500 font-bold mb-1">Status Terkini:</p><p class="text-amber-400 font-black tracking-wide">${err.message}</p></div></div>`,
+                    background: '#18181b', 
+                    color: '#fff',
+                    confirmButtonColor: '#f59e0b' 
+                });
+            } else {
+                Swal.fire({ 
+                    icon: 'error', 
+                    title: 'Gagal Menyimpan', 
+                    text: err.message, 
+                    background: '#18181b', 
+                    color: '#ef4444' 
+                });
+            }
         }
     });
 
@@ -200,85 +284,52 @@ const Expedition = () => {
         });
     };
 
-    useEffect(() => {
-        let html5QrCode;
+    const handleScanSuccess = (decodedText) => {
+        if (decodedText === lastScannedRef.current) return;
         
-        if (scannerActive) {
-            html5QrCode = new Html5Qrcode("colReader");
-            scannerRef.current = html5QrCode;
-            
-            const handleScanSuccess = (decodedText) => {
-                if (decodedText === lastScannedRef.current) return;
-                
-                lastScannedRef.current = decodedText;
-                setAwb(decodedText);
-                
-                const upperAwb = decodedText.trim().toUpperCase();
+        lastScannedRef.current = decodedText;
+        setAwb(decodedText);
+        
+        const upperAwb = decodedText.trim().toUpperCase();
 
-                if (!validateResiPrefix(upperAwb, courierId)) {
-                    playSystemSound('error');
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Salah Ekspedisi!',
-                        text: `Resi ${upperAwb} bukan milik ${courierName}.`,
-                        toast: true, position: 'top-end', showConfirmButton: false, timer: 4000,
-                        background: '#18181b', color: '#ef4444'
-                    });
-                    setTimeout(() => { lastScannedRef.current = null; }, 3000);
-                    return;
-                }
-
-                const existing = packagesRef.current.find(item => item.resi === upperAwb && item.expedition === courierId);
-                
-                if (existing) {
-                    playSystemSound('double');
-                    Swal.fire({ 
-                        icon: 'warning', 
-                        title: 'Resi Sudah Terdaftar!', 
-                        text: upperAwb,
-                        toast: true, position: 'top-end', showConfirmButton: false, timer: 3000,
-                        background: '#18181b', color: '#f59e0b'
-                    });
-                    setTimeout(() => { lastScannedRef.current = null; }, 3000);
-                    return;
-                }
-
-                playSystemSound('success');
-                Swal.fire({title: `Memproses ${upperAwb}...`, toast: true, position: 'top-end', showConfirmButton: false, timer: 1500, background: '#18181b', color: '#60a5fa'});
-                
-                if (addResiMutationRef.current) {
-                    addResiMutationRef.current.mutate(upperAwb);
-                }
-                
-                // Allow scanning the same barcode again after 2 seconds
-                setTimeout(() => { lastScannedRef.current = null; }, 2000);
-            };
-
-            html5QrCode.start(
-                { facingMode: "environment" },
-                { fps: 10, qrbox: { width: 250, height: 150 } },
-                handleScanSuccess,
-                () => {} // Ignore continuous errors
-            ).catch(err => {
-                console.error("Camera start error:", err);
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Akses Kamera Gagal',
-                    text: 'Kamera sedang digunakan atau tidak diizinkan.',
-                    background: '#18181b', color: '#fff'
-                });
-                setScannerActive(false);
+        if (!validateResiPrefix(upperAwb, courierId)) {
+            playSystemSound('error');
+            Swal.fire({
+                icon: 'error',
+                title: 'Salah Ekspedisi!',
+                text: `Resi ${upperAwb} bukan milik ${courierName}.`,
+                toast: true, position: 'top-end', showConfirmButton: false, timer: 4000,
+                background: '#18181b', color: '#ef4444'
             });
+            setTimeout(() => { lastScannedRef.current = null; }, 3000);
+            return;
+        }
+
+        const existing = packagesRef.current.find(item => item.resi === upperAwb && item.expedition === courierId);
+        
+        if (existing) {
+            playSystemSound('double');
+            Swal.fire({ 
+                icon: 'warning', 
+                title: 'Resi Sudah Terdaftar!', 
+                text: upperAwb,
+                toast: true, position: 'top-end', showConfirmButton: false, timer: 3000,
+                background: '#18181b', color: '#f59e0b'
+            });
+            setTimeout(() => { lastScannedRef.current = null; }, 3000);
+            return;
+        }
+
+        playSystemSound('success');
+        Swal.fire({title: `Memproses ${upperAwb}...`, toast: true, position: 'top-end', showConfirmButton: false, timer: 1500, background: '#18181b', color: '#60a5fa'});
+        
+        if (addResiMutationRef.current) {
+            addResiMutationRef.current.mutate(upperAwb);
         }
         
-        return () => {
-            if (html5QrCode) {
-                try {
-                    html5QrCode.stop().then(() => html5QrCode.clear()).catch(() => {});
-                } catch(e) {}
-            }
-        };
-    }, [scannerActive, courierId]);
+        // Allow scanning the same barcode again after 2 seconds
+        setTimeout(() => { lastScannedRef.current = null; }, 2000);
+    };
 
     const filteredData = packages.filter(item => {
         if (!item.expedition || item.expedition.toUpperCase() !== courierId.toUpperCase()) return false;
@@ -318,7 +369,12 @@ const Expedition = () => {
     };
 
     return (
-        <div className="fade-in space-y-6">
+        <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+            className="space-y-6"
+        >
             <div className="bg-gradient-to-r from-amber-900/40 to-orange-900/20 backdrop-blur-xl p-6 md:p-8 rounded-3xl border border-amber-500/20 shadow-[0_10px_40px_rgba(245,158,11,0.1)] relative overflow-hidden group">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/10 blur-[80px] rounded-full -translate-y-1/2 translate-x-1/2 pointer-events-none group-hover:bg-amber-500/20 transition-all duration-700"></div>
                 
@@ -348,29 +404,14 @@ const Expedition = () => {
                         </div>
                     </form>
                     
-                    {scannerActive && (
-                        <div className="relative w-full mt-4 bg-zinc-950 rounded-2xl overflow-hidden border border-amber-500/50 shadow-[0_0_30px_rgba(245,158,11,0.2)] group animate-in fade-in zoom-in duration-300">
-                            <div id="colReader" className="w-full relative z-10 [&>video]:rounded-2xl [&>video]:w-full [&>video]:object-cover"></div>
-                            
-                            <div className="absolute inset-0 z-20 pointer-events-none">
-                                <div className="absolute top-0 left-0 w-12 h-12 border-t-4 border-l-4 border-amber-500 rounded-tl-xl m-6"></div>
-                                <div className="absolute top-0 right-0 w-12 h-12 border-t-4 border-r-4 border-amber-500 rounded-tr-xl m-6"></div>
-                                <div className="absolute bottom-0 left-0 w-12 h-12 border-b-4 border-l-4 border-amber-500 rounded-bl-xl m-6"></div>
-                                <div className="absolute bottom-0 right-0 w-12 h-12 border-b-4 border-r-4 border-amber-500 rounded-br-xl m-6"></div>
-                                
-                                <div className="absolute top-1/2 left-4 right-4 h-[2px] bg-amber-500/80 shadow-[0_0_15px_#f59e0b] -translate-y-1/2 animate-pulse"></div>
-                                
-                                <div className="absolute top-6 left-1/2 -translate-x-1/2 bg-black/60 backdrop-blur-md text-amber-500 text-xs font-black tracking-widest px-4 py-2 rounded-full border border-amber-500/30 flex items-center gap-2 shadow-lg">
-                                    <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
-                                    CONTINUOUS SCAN MODE
-                                </div>
-                            </div>
-
-                            <button onClick={() => setScannerActive(false)} className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-rose-500/90 backdrop-blur-sm text-white px-6 py-2.5 rounded-xl text-sm font-bold shadow-[0_5px_20px_rgba(244,63,94,0.4)] hover:bg-rose-600 transition-all z-30 flex items-center gap-2 border border-rose-400/50">
-                                <XCircle className="w-4 h-4" /> TUTUP SCANNER
-                            </button>
-                        </div>
-                    )}
+                    <AnimatePresence>
+                        {scannerActive && (
+                            <ScannerCamera 
+                                onScanSuccess={handleScanSuccess} 
+                                onClose={() => setScannerActive(false)} 
+                            />
+                        )}
+                    </AnimatePresence>
                 </div>
             </div>
 
@@ -516,7 +557,7 @@ const Expedition = () => {
                     onClose={() => setTrackModal({ isOpen: false, resi: null, courier: null })} 
                 />
             )}
-        </div>
+        </motion.div>
     );
 };
 
