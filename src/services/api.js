@@ -105,7 +105,15 @@ export const getStatusCategory = (status) => {
     const s = status.toUpperCase();
     if (s.includes('DELIVERED') || s.includes('TERKIRIM') || s.includes('SUCCESS')) return 'TERKIRIM';
     if (s.includes('RETUR') || s.includes('GAGAL') || s.includes('CANCEL') || s.includes('INVALID')) return 'RETUR';
-    if (s.includes('DIKIRIM') || s.includes('DELIVERING') || s.includes('OUT FOR DELIVERY') || s.includes('KURIR') || s.includes('PERJALANAN')) return 'DIKIRIM';
+    
+    const movingKeywords = [
+        'DC_', 'DC ', 'DIBERANGKATKAN', 'TIBA DI', 'MENUJU', 'KELUAR DARI', 
+        'TRANSIT', 'SORTIR', 'SORTATION', 'HUB', 'GATEWAY', 'SEDANG DIKIRIM', 
+        'DIKIRIMKAN KE', 'PERJALANAN', 'TELAH DITERIMA OLEH DC', 'TRANSPORTING', 
+        'PICKUP HUB', 'DROP OFF POINT', 'PICKED UP'
+    ];
+    
+    if (s.includes('DIKIRIM') || s.includes('DELIVERING') || s.includes('OUT FOR DELIVERY') || s.includes('KURIR') || movingKeywords.some(kw => s.includes(kw))) return 'DIKIRIM';
     return 'PROSES';
 };
 

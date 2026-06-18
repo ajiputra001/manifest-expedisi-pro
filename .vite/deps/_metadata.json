@@ -2,7 +2,7 @@
   "hash": "6be030c6",
   "configHash": "0a93c452",
   "lockfileHash": "7c8b501a",
-  "browserHash": "37e75514",
+  "browserHash": "19ba8fd3",
   "optimized": {
     "@supabase/supabase-js": {
       "src": "../../node_modules/@supabase/supabase-js/dist/index.mjs",
@@ -26,6 +26,12 @@
       "src": "../../node_modules/chart.js/dist/chart.js",
       "file": "chart__js.js",
       "fileHash": "2c0affb8",
+      "needsInterop": false
+    },
+    "framer-motion": {
+      "src": "../../node_modules/framer-motion/dist/es/index.mjs",
+      "file": "framer-motion.js",
+      "fileHash": "f7510ab6",
       "needsInterop": false
     },
     "html5-qrcode": {

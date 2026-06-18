@@ -116,6 +116,12 @@ const Expedition = () => {
                                 isAlreadyMoved = true;
                                 movedStatus = latestDesc;
                             }
+                        } else if (courierId.toUpperCase() === 'SPX' || courierId.toUpperCase().includes('SHOPEE')) {
+                            // Sesuai instruksi: hanya izinkan SPX jika status terakhirnya "CREATED"
+                            if (!latestDesc.includes('CREATED')) {
+                                isAlreadyMoved = true;
+                                movedStatus = latestDesc;
+                            }
                         }
                     }
 
