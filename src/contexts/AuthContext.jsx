@@ -38,6 +38,9 @@ export const AuthProvider = ({ children }) => {
   const register = async (userData) => {
     const { error } = await supabase.from('users').insert([userData]);
     if (error) {
+      if (error.code === '23505') { // Postgres code for unique_violation
+          throw new Error('DUPLICATE_USERNAME');
+      }
       throw new Error(error.message);
     }
     return true;

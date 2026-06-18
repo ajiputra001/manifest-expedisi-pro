@@ -41,7 +41,19 @@ const Login = () => {
                 setIsLoginMode(true);
             }
         } catch (error) {
-            Swal.fire({toast: true, position: 'top', showConfirmButton: false, timer: 3000, icon: 'error', title: 'Gagal', text: error.message, background: '#18181b', color: '#ef4444'});
+            if (error.message === 'DUPLICATE_USERNAME') {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'ID Pengguna Sudah Dipakai!',
+                    html: `<div class="text-sm mt-2 text-zinc-400 text-left space-y-2"><p>ID Pengguna <strong class="text-amber-500 tracking-wider">"${formData.username}"</strong> sudah terdaftar di sistem.</p><p>Mohon gunakan ID Pengguna (Username) kombinasi lain yang unik, atau hubungi Administrator jika ini adalah kesalahan.</p></div>`,
+                    background: '#18181b',
+                    color: '#fff',
+                    confirmButtonColor: '#f59e0b',
+                    confirmButtonText: 'Coba Lagi'
+                });
+            } else {
+                Swal.fire({toast: true, position: 'top', showConfirmButton: false, timer: 4000, icon: 'error', title: 'Gagal', text: error.message, background: '#18181b', color: '#ef4444'});
+            }
         } finally {
             setLoading(false);
         }
