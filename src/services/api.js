@@ -5,9 +5,11 @@ const BINDERBYTE_API_KEY = "3f4878c780923585911ca5155bbe44dfe6360fa47865ca535033
 
 export const trackResi = async (courier, awb, forceRefresh = false) => {
   try {
+    const isSPX = normalizeExpedition(courier) === 'SPX';
     const cacheKey = `manifest_cache_${courier}_${awb}`;
     
-    if (!forceRefresh) {
+    // Jangan gunakan cache untuk SPX, biarkan selalu realtime
+    if (!forceRefresh && !isSPX) {
         const cachedStr = localStorage.getItem(cacheKey);
         if (cachedStr) {
             try {

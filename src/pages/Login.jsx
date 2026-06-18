@@ -48,16 +48,16 @@ const Login = () => {
     };
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-zinc-950/80 backdrop-blur-3xl overflow-hidden">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-zinc-950/95 backdrop-blur-sm overflow-hidden">
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                <div className="absolute top-[10%] left-[10%] w-[600px] h-[600px] bg-amber-500/10 rounded-full blur-[150px] animate-pulse" style={{animationDuration: '6s'}}></div>
-                <div className="absolute bottom-[10%] right-[10%] w-[600px] h-[600px] bg-orange-600/10 rounded-full blur-[150px] animate-pulse" style={{animationDuration: '8s', animationDelay: '2s'}}></div>
-                <Box className="absolute top-[20%] left-[15%] text-zinc-700/30 w-16 h-16 animate-float" />
-                <Truck className="absolute bottom-[25%] right-[15%] text-zinc-700/30 w-16 h-16 animate-float" style={{animationDelay: '1s'}} />
+                <div className="absolute top-[10%] left-[10%] w-[400px] h-[400px] bg-amber-500/10 rounded-full blur-3xl"></div>
+                <div className="absolute bottom-[10%] right-[10%] w-[400px] h-[400px] bg-orange-600/10 rounded-full blur-3xl"></div>
+                <Box className="absolute top-[20%] left-[15%] text-zinc-800/40 w-16 h-16 animate-float" />
+                <Truck className="absolute bottom-[25%] right-[15%] text-zinc-800/40 w-16 h-16 animate-float" style={{animationDelay: '1s'}} />
             </div>
 
             <motion.div 
-                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                initial={{ opacity: 0, scale: 0.95, y: 10 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 transition={{ duration: 0.5, ease: "easeOut" }}
                 className="w-full max-w-sm bg-white/[0.02] border border-white/10 rounded-[2rem] p-6 md:p-8 shadow-[0_8px_32px_rgba(0,0,0,0.3)] backdrop-blur-3xl relative z-10 overflow-hidden"
